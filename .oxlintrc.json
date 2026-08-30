@@ -1,0 +1,39 @@
+{
+  "env": {
+    "node": true,
+    "es2024": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn",
+    "pedantic": "warn"
+  },
+  "plugins": ["typescript", "unicorn", "promise", "node"],
+  "rules": {
+    "no-console": "off",
+    "typescript/no-explicit-any": "off",
+    "unicorn/prefer-module": "off",
+    "node/no-process-env": "off",
+    "no-underscore-dangle": "off",
+    "max-lines-per-function": "off",
+    "no-await-in-loop": "off",
+    "require-unicode-regexp": "off",
+    "require-await": "off",
+    "promise/no-multiple-resolved": "off",
+    "unicorn/no-array-sort": "off",
+    "no-promise-executor-return": "off",
+    "unicorn/no-array-callback-reference": "off",
+    "unicorn/prefer-string-replace-all": "off",
+    "unicorn/prefer-top-level-await": "off",
+    "unicorn/no-immediate-mutation": "off",
+    "unicorn/prefer-single-call": "off",
+    "typescript/no-extraneous-class": [
+      "error",
+      {
+        "allowWithDecorator": true
+      }
+    ]
+  },
+  "ignorePatterns": ["dist/**", "coverage/**", "node_modules/**", "fixtures/**"]
+}

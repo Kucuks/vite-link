@@ -1,0 +1,44 @@
+name: Publish to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact package version to publish
+        required: true
+        type: string
+      confirm:
+        description: I confirm this public npm publication
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    if: inputs.confirm
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: npm
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: npm ci
+      - name: Verify version and tag
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+          RELEASE_REF: ${{ github.ref_name }}
+        run: >-
+          node -e "const p=require('./package.json');
+          if(p.version!==process.env.EXPECTED_VERSION) throw new Error('package.json version does not match the requested version');
+          if(process.env.RELEASE_REF!=='v'+p.version) throw new Error('Run this workflow from tag v'+p.version)"
+      - run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

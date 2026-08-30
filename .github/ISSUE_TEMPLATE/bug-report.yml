@@ -1,0 +1,48 @@
+name: Bug report
+description: Report reproducible incorrect behavior in Vite Kit
+title: 'bug: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please remove private data and provide the smallest reproduction you can.
+  - type: input
+    id: version
+    attributes:
+      label: Vite Kit version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Node, npm, Vite, TypeScript, operating system, framework, and module format.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Link to a repository or provide the smallest configuration and source needed to reproduce the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and logs
+    validations:
+      required: true
+  - type: checkboxes
+    id: security
+    attributes:
+      label: Security check
+      options:
+        - label: This is not a security vulnerability. I will use private vulnerability reporting for security issues.
+          required: true

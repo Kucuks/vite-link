@@ -1,0 +1,323 @@
+<h1 align="center">Vite Kit</h1>
+
+<p align="center">
+  <strong>Predictable Vite/Rolldown builds and managed development lifecycles for Node.js backends.</strong>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/vite-kit"><img alt="npm version" src="https://img.shields.io/npm/v/vite-kit?color=646cff"></a>
+  <a href="https://www.npmjs.com/package/vite-kit"><img alt="npm downloads" src="https://img.shields.io/npm/dw/vite-kit?color=646cff"></a>
+  <a href="https://github.com/Kucuks/vite-kit/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/Kucuks/vite-kit/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Node.js support" src="https://img.shields.io/badge/Node.js-%5E20.19%20%7C%7C%20%3E%3D22.12-339933?logo=nodedotjs&logoColor=white">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+</p>
+
+<p align="center">
+  <a href="#why-vite-kit">Why Vite Kit?</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#commands">Commands</a> ·
+  <a href="#troubleshooting">Troubleshooting</a>
+</p>
+
+Vite is already an excellent build tool. A backend, however, also needs predictable Node output, dependency externalization, type checking, assets, diagnostics, and a child process that restarts without leaking application state. Vite Kit brings those pieces together while keeping its core framework-neutral.
+
+Nest is the first bundled adapter, exposed as `vite-kit/nest`; it is not a core dependency or the boundary of the project.
+
+> **Scope:** Vite Kit improves the development and build pipeline. It is not an HTTP server, production process supervisor, cluster manager, or application-capacity benchmark.
+
+## Highlights
+
+|     | Capability            | Vite Kit behavior                                                            |
+| --- | --------------------- | ---------------------------------------------------------------------------- |
+| ⚡  | Node builds           | Vite 8/Rolldown SSR builds with executable CommonJS or ESM output            |
+| 🔁  | Development lifecycle | Build, start, gracefully stop, and restart a managed Node child process      |
+| 🧩  | Framework adapters    | Optional transforms, defaults, and diagnostics outside the neutral core      |
+| 🩺  | Early feedback        | Optional TypeScript checks and actionable configuration/source diagnostics   |
+| 📦  | Backend pipelines     | Asset copying/watching, metadata commands, and dependency externalization    |
+| 🔒  | Safety                | Bounded concurrency, restart backpressure, path checks, and symlink defenses |
+
+## Why Vite Kit?
+
+Direct Vite usage remains available. Vite Kit adds the backend-specific orchestration that would otherwise live in project-owned scripts and plugins.
+
+| Requirement                | Direct Vite                | Vite Kit                                               |
+| -------------------------- | -------------------------- | ------------------------------------------------------ |
+| Node SSR bundle            | Built in                   | Built in with backend-oriented output defaults         |
+| Type checking              | Separate command or plugin | Optional blocking or asynchronous pipeline             |
+| Dependency externalization | Project configuration      | Dependency-aware defaults with selective bundling      |
+| Backend assets             | Project configuration      | Copy/watch mappings with collision and boundary checks |
+| Child-process restart      | Project script             | Managed graceful restart with backpressure             |
+| Framework transforms       | Project/plugin specific    | Explicit adapter contract; Nest bundled separately     |
+| Backend diagnostics        | Project specific           | Core and adapter-owned configuration/source rules      |
+
+Use Vite Kit when a Node backend needs a repeatable build-and-restart boundary. Use Vite directly when a bundle is all you need. Keep production supervision with your deployment platform, container runtime, systemd, or another dedicated process manager.
+
+## Compatibility
+
+| Dependency | Supported                 | Release evidence                                                       |
+| ---------- | ------------------------- | ---------------------------------------------------------------------- |
+| Node.js    | `^20.19.0` or `>=22.12.0` | CI covers the minimums, Node 24, Windows, macOS, and Linux             |
+| Vite       | `>=8.0.0 <9`              | Packed consumers cover `8.0.0` and `8.2.2`                             |
+| TypeScript | `>=5.6.0 <7`              | Packed consumers cover `5.6.3`, `5.7.3`, `5.8.3`, `5.9.3`, and `6.0.3` |
+| Modules    | CommonJS and ESM          | Both package entry points and built application output are verified    |
+
+The `0.1.0` release build is pinned to Vite `8.2.2` and TypeScript `6.0.3`. TypeScript 7 is not supported yet because [its 7.0 release does not ship a programmatic compiler API](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/), which adapter transforms and source diagnostics require.
+
+## Quick start
+
+For a new project, install Vite Kit with its tested peer versions:
+
+```bash
+npm install --save-dev vite-kit vite@^8.2.2 typescript@^6.0.3
+```
+
+An existing project can keep any Vite and TypeScript versions from the [supported ranges](#compatibility).
+
+### Nest
+
+In an existing Nest application, create `vite.config.ts`:
+
+```ts
+import { defineConfig } from 'vite'
+import nest from 'vite-kit/nest'
+
+export default defineConfig({
+  plugins: [
+    nest({
+      entry: 'src/main.ts',
+      build: { outDir: 'dist', format: 'cjs' },
+      typecheck: { dev: 'async', build: 'before' },
+      diagnostics: true,
+    }),
+  ],
+})
+```
+
+Let Vite Kit close the application before a restart. In `src/main.ts`:
+
+```ts
+import 'reflect-metadata'
+import { NestFactory } from '@nestjs/core'
+import { runManagedBootstrap } from 'vite-kit/runtime'
+import { AppModule } from './app.module'
+
+async function start() {
+  const app = await NestFactory.create(AppModule)
+  app.enableShutdownHooks()
+  await app.listen(Number(process.env.PORT ?? 3000))
+  return app
+}
+
+void runManagedBootstrap(start)
+```
+
+Add scripts to `package.json`:
+
+```json
+{
+  "scripts": {
+    "dev": "vite-kit dev",
+    "build": "vite-kit build",
+    "diagnostics": "vite-kit diagnostics",
+    "start": "node --enable-source-maps dist/main.cjs"
+  }
+}
+```
+
+Start development:
+
+```bash
+npm run dev
+```
+
+The first successful build starts the application. Initial build errors leave the watcher active, later build errors keep the last successful child running, and a successful rebuild gracefully replaces the child.
+
+The Nest adapter lowers legacy decorators, emits configured decorator metadata, keeps Nest runtime packages external, and warns about unsafe type-only constructor injection. A complete consumer project is available in [`examples/basic-nest`](examples/basic-nest).
+
+### Framework-neutral Node.js
+
+The default export is the core plugin. Create `vite.config.ts`:
+
+```ts
+import { defineConfig } from 'vite'
+import viteKit from 'vite-kit'
+
+export default defineConfig({
+  plugins: [
+    viteKit({
+      entry: 'src/main.ts',
+      build: { outDir: 'dist', format: 'esm' },
+      typecheck: { dev: 'async', build: 'before' },
+    }),
+  ],
+})
+```
+
+Return any object with a `close` method from the managed bootstrap factory:
+
+```ts
+import { createServer } from 'node:http'
+import { runManagedBootstrap } from 'vite-kit/runtime'
+
+async function start() {
+  const server = createServer((_request, response) => {
+    response.end('Hello from Vite Kit')
+  })
+
+  await new Promise<void>((resolve) => {
+    server.listen(Number(process.env.PORT ?? 3000), resolve)
+  })
+
+  return {
+    close: () =>
+      new Promise<void>((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()))
+      }),
+  }
+}
+
+void runManagedBootstrap(start)
+```
+
+Use `vite-kit dev` during development and start the production build with `node --enable-source-maps dist/main.mjs`.
+
+## How it works
+
+Vite Kit intentionally uses a build-and-restart process boundary instead of provider-level hot swapping:
+
+```text
+source change
+    ↓
+Vite/Rolldown build
+    ├─ error   → keep the last successful child running
+    └─ success → emit dist entry
+                    ↓
+             graceful child close
+                    ↓
+               Node restart
+```
+
+The managed runtime prefers an IPC shutdown handshake. Applications that do not use `runManagedBootstrap` receive the configured signal, followed by the force signal only after `gracefulTimeout`.
+
+## Commands
+
+| Command                | What it does                                                            | Use it when                                           |
+| ---------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------- |
+| `vite-kit dev`         | Watches builds and configured assets/metadata; owns child restarts      | Running the backend locally                           |
+| `vite-kit build`       | Runs diagnostics, type checking, build validation, metadata, and assets | Producing release output                              |
+| `vite-kit diagnostics` | Reports configuration and source-level risks without building           | Auditing or debugging a project                       |
+| `vite-kit metadata`    | Runs only explicitly configured metadata commands                       | Regenerating OpenAPI, GraphQL, ORM, or similar output |
+
+All commands accept `--root`, `--config`, `--mode`, and `--strict`.
+
+Direct `vite build` also works and runs the Vite plugins and asset close hook. Prefer `vite-kit build` when you want the complete managed diagnostics, type-check, metadata, validation, and asset pipeline.
+
+## Configuration
+
+Configuration stays in `vite.config.ts`; Vite Kit does not introduce a second configuration format.
+
+```ts
+viteKit({
+  entry: 'src/main.ts',
+  tsconfig: 'tsconfig.build.json',
+  build: { format: 'cjs', outDir: 'dist', sourcemap: true },
+  dev: { debounce: 80, gracefulTimeout: 5_000 },
+  assets: [{ include: 'src/views/**/*', base: 'src', restart: false }],
+  external: { noExternal: ['a-package-that-must-be-bundled'] },
+  metadata: { commands: ['npm run generate:openapi'], watch: true },
+})
+```
+
+See the [configuration reference](docs/CONFIGURATION.md) for every option and default. The build output directory must remain inside the project root; parent escapes and symlink escapes are rejected before Vite can empty or write it.
+
+## Public entry points
+
+| Import             | Purpose                                                              |
+| ------------------ | -------------------------------------------------------------------- |
+| `vite-kit`         | Core plugin, runtime helpers, configuration types, and adapter types |
+| `vite-kit/plugin`  | Explicit core-plugin entry point                                     |
+| `vite-kit/nest`    | Nest adapter and its TypeScript transform                            |
+| `vite-kit/runtime` | Managed bootstrap and ESM path helpers                               |
+
+The supported public surface is limited to these entry points. Framework packages are never imported by the core.
+
+### Common exports
+
+| Export                                               | Entry point                    | Purpose                                                            |
+| ---------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------ |
+| `viteKit(options)`                                   | `vite-kit`, `vite-kit/plugin`  | Create the framework-neutral Vite plugin set                       |
+| `defineViteKitConfig(options)`                       | `vite-kit`, `vite-kit/plugin`  | Type a reusable Vite Kit options object                            |
+| `nest(options)`                                      | `vite-kit/nest`                | Create the core plugin with Nest defaults and transforms           |
+| `defineNestViteKitConfig(options)`                   | `vite-kit/nest`                | Apply Nest defaults without constructing plugins immediately       |
+| `runManagedBootstrap(factory, options?)`             | `vite-kit`, `vite-kit/runtime` | Advertise IPC readiness and close application resources on restart |
+| `disposeApp(app)`                                    | `vite-kit`, `vite-kit/runtime` | Close a managed object when it exposes a `close` method            |
+| `filename(import.meta.url)` / `dir(import.meta.url)` | `vite-kit`, `vite-kit/runtime` | Resolve ESM file and directory paths                               |
+
+## Guides and examples
+
+| Resource                                         | Covers                                                                |
+| ------------------------------------------------ | --------------------------------------------------------------------- |
+| [Basic Nest example](examples/basic-nest)        | Runnable Nest consumer configuration and bootstrap                    |
+| [Configuration reference](docs/CONFIGURATION.md) | Options, defaults, assets, diagnostics, metadata, and externalization |
+| [Architecture](docs/ARCHITECTURE.md)             | Build lifecycle, restart model, ownership, and safety boundaries      |
+| [Writing adapters](docs/ADAPTERS.md)             | Adapter contract, boundaries, diagnostics, and testing expectations   |
+| [Security policy](SECURITY.md)                   | Private vulnerability reporting and supported versions                |
+| [Contributing guide](CONTRIBUTING.md)            | Repository setup, checks, and pull-request expectations               |
+
+## Troubleshooting
+
+<details>
+<summary><strong>Why does npm reject TypeScript 7?</strong></summary>
+
+Vite Kit currently imports the TypeScript programmatic compiler API for transforms and diagnostics. TypeScript 7.0 does not provide that API, so the supported range intentionally ends below 7. Use TypeScript `6.0.3` for a new project or any tested release from `5.6.3` through `6.0.3`.
+
+</details>
+
+<details>
+<summary><strong>Why is <code>dist/main.cjs</code> or <code>dist/main.mjs</code> missing?</strong></summary>
+
+The emitted extension follows `build.format`. CommonJS produces `main.cjs`; ESM produces `main.mjs`; `auto` uses the nearest `package.json` and TypeScript module settings. Keep the `start` script aligned with the chosen format, or set the format explicitly.
+
+</details>
+
+<details>
+<summary><strong>Why does the port stay busy after a rebuild?</strong></summary>
+
+Wrap startup with `runManagedBootstrap`, return an object whose `close` method releases the server and other resources, and enable framework shutdown hooks when applicable. Without the runtime handshake, Vite Kit can signal the process but cannot perform application-specific cleanup for it.
+
+</details>
+
+<details>
+<summary><strong>Why does a native or database dependency fail after bundling?</strong></summary>
+
+Native modules and runtime-sensitive packages should normally remain external. Common packages are externalized by default; add project-specific packages to `external.alwaysExternal`, or remove an accidental `noExternal` rule that selected them for bundling.
+
+</details>
+
+<details>
+<summary><strong>Should I use <code>vite build</code> or <code>vite-kit build</code>?</strong></summary>
+
+Use `vite build` when plugin transforms and asset copying are enough. Use `vite-kit build` for the complete backend release pipeline: diagnostics, type checking, build validation, metadata generation, and assets.
+
+</details>
+
+## Reliability and scope
+
+- File and diagnostic work uses bounded concurrency.
+- Rapid rebuilds collapse into deterministic restart requests.
+- Build errors do not replace a known-good child process.
+- Asset sources, output targets, symlinks, and collisions are validated before writes or deletes.
+- Secret-looking environment names are blocked from build-time inlining by default.
+- Production dependencies remain external unless configuration explicitly selects them for bundling.
+- Packed-package smoke tests exercise real Nest builds, both package module formats, process startup, and HTTP responses.
+
+These guarantees describe Vite Kit as a development and build tool. Runtime capacity, traffic handling, deployment topology, and production availability remain properties of the application and its platform.
+
+## Contributing, security, and license
+
+Run `npm ci` and `npm run check` before opening a pull request. See the [contributing guide](CONTRIBUTING.md) for the complete workflow.
+
+Report suspected vulnerabilities privately according to the [security policy](SECURITY.md).
+
+Vite Kit is available under the [MIT License](LICENSE).

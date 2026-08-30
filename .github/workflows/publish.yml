@@ -25,20 +25,30 @@ jobs:
     environment: npm
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: v${{ inputs.version }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - run: npm ci
-      - name: Verify version and tag
+      - name: Verify npm supports trusted publishing
+        run: >-
+          node -e "const { execFileSync }=require('node:child_process');
+          const version=execFileSync('npm',['--version'],{encoding:'utf8'}).trim();
+          const [major,minor]=version.split('.').map(Number);
+          if(major<11||(major===11&&minor<5)) throw new Error('npm >= 11.5.1 is required for trusted publishing; found '+version);
+          console.log('npm '+version+' supports trusted publishing')"
+      - name: Verify version and release tag
         env:
           EXPECTED_VERSION: ${{ inputs.version }}
-          RELEASE_REF: ${{ github.ref_name }}
+          RELEASE_TAG: v${{ inputs.version }}
         run: >-
           node -e "const p=require('./package.json');
           if(p.version!==process.env.EXPECTED_VERSION) throw new Error('package.json version does not match the requested version');
-          if(process.env.RELEASE_REF!=='v'+p.version) throw new Error('Run this workflow from tag v'+p.version)"
-      - run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          const {execFileSync}=require('node:child_process');
+          const tags=execFileSync('git',['tag','--points-at','HEAD'],{encoding:'utf8'}).trim().split(/\s+/);
+          if(!tags.includes(process.env.RELEASE_TAG)) throw new Error('Checked-out commit is not tagged '+process.env.RELEASE_TAG)"
+      - name: Publish with npm trusted publishing
+        run: npm publish --access public --provenance

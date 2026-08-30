@@ -1,5 +1,5 @@
 {
-  "name": "vite-kit",
+  "name": "vite-link",
   "version": "0.1.0",
   "description": "Modular Vite/Rolldown build, diagnostics, asset and managed-runtime toolkit for Node.js backends.",
   "private": false,
@@ -27,11 +27,11 @@
   "author": "Kucuks",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Kucuks/vite-kit.git"
+    "url": "git+https://github.com/Kucuks/vite-link.git"
   },
-  "homepage": "https://github.com/Kucuks/vite-kit#readme",
+  "homepage": "https://github.com/Kucuks/vite-link#readme",
   "bugs": {
-    "url": "https://github.com/Kucuks/vite-kit/issues"
+    "url": "https://github.com/Kucuks/vite-link/issues"
   },
   "publishConfig": {
     "access": "public",
@@ -39,7 +39,7 @@
   },
   "sideEffects": false,
   "bin": {
-    "vite-kit": "dist/cli/bin.js"
+    "vite-link": "dist/cli/bin.js"
   },
   "exports": {
     ".": {

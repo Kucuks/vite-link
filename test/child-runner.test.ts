@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { resolveViteKitConfig } from '../src/config/defaults'
+import { resolveViteLinkConfig } from '../src/config/defaults'
 import { ChildRunner, RestartController } from '../src/process'
 import { createFixture } from './helpers'
 
@@ -17,16 +17,16 @@ describe('ChildRunner', () => {
         'const { writeFileSync } = require("node:fs")',
         `writeFileSync(${JSON.stringify(readyFile)}, "ready")`,
         'process.on("message", (message) => {',
-        '  if (message?.type !== "vite-kit:shutdown-request") return',
+        '  if (message?.type !== "vite-link:shutdown-request") return',
         `  writeFileSync(${JSON.stringify(closedFile)}, "closed")`,
         '  process.disconnect()',
         '})',
-        'process.send({ type: "vite-kit:runtime-ready" })',
+        'process.send({ type: "vite-link:runtime-ready" })',
         'setInterval(() => {}, 1000)',
       ].join('\n'),
     )
 
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       dev: { gracefulTimeout: 500, nodeArgs: [] },
       build: { entryFileName: 'main.cjs' },
@@ -45,17 +45,17 @@ describe('ChildRunner', () => {
     const root = await createFixture()
     const readyFile = join(root, 'mode-env.json')
     await mkdir(join(root, 'dist'), { recursive: true })
-    await writeFile(join(root, '.env.development'), 'VITE_KIT_TEST_VALUE=wrong-mode')
-    await writeFile(join(root, '.env.staging'), 'VITE_KIT_TEST_VALUE=staging-mode')
+    await writeFile(join(root, '.env.development'), 'VITE_LINK_TEST_VALUE=wrong-mode')
+    await writeFile(join(root, '.env.staging'), 'VITE_LINK_TEST_VALUE=staging-mode')
     await writeFile(
       join(root, 'dist/main.cjs'),
       [
         'const { writeFileSync } = require("node:fs")',
-        `writeFileSync(${JSON.stringify(readyFile)}, JSON.stringify({ value: process.env.VITE_KIT_TEST_VALUE }))`,
+        `writeFileSync(${JSON.stringify(readyFile)}, JSON.stringify({ value: process.env.VITE_LINK_TEST_VALUE }))`,
         'setInterval(() => {}, 1000)',
       ].join('\n'),
     )
-    const config = await resolveViteKitConfig(
+    const config = await resolveViteLinkConfig(
       { root, dev: { gracefulTimeout: 50, nodeArgs: [] } },
       'development',
       'staging',
@@ -84,7 +84,7 @@ describe('ChildRunner', () => {
       ].join('\n'),
     )
 
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       dev: { gracefulTimeout: 50, nodeArgs: [] },
       build: { entryFileName: 'main.cjs' },

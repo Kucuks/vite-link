@@ -1,11 +1,11 @@
 # Writing adapters
 
-An adapter adds framework-specific behavior without moving that behavior into Vite Kit's core. The bundled Nest adapter is the reference implementation.
+An adapter adds framework-specific behavior without moving that behavior into Vite Link's core. The bundled Nest adapter is the reference implementation.
 
 ```ts
-import type { ViteKitAdapter } from 'vite-kit'
+import type { ViteLinkAdapter } from 'vite-link'
 
-export const customAdapter: ViteKitAdapter = {
+export const customAdapter: ViteLinkAdapter = {
   name: 'custom-runtime',
   plugins: () => [{ name: 'custom-runtime:transform' }],
   configDiagnostics: () => [],
@@ -17,11 +17,11 @@ Use it with the core plugin:
 
 ```ts
 import { defineConfig } from 'vite'
-import viteKit from 'vite-kit'
+import viteLink from 'vite-link'
 import { customAdapter } from './custom-adapter'
 
 export default defineConfig({
-  plugins: [viteKit({ adapters: [customAdapter] })],
+  plugins: [viteLink({ adapters: [customAdapter] })],
 })
 ```
 

@@ -1,6 +1,6 @@
 import { stat } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import type { ResolvedViteKitConfig } from '../types'
+import type { ResolvedViteLinkConfig } from '../types'
 
 export interface BuildValidationResult {
   entry: string
@@ -8,7 +8,7 @@ export interface BuildValidationResult {
 }
 
 export async function validateBuildOutput(
-  config: ResolvedViteKitConfig,
+  config: ResolvedViteLinkConfig,
 ): Promise<BuildValidationResult> {
   const entry = resolve(config.root, config.build.outDir, config.build.entryFileName)
 

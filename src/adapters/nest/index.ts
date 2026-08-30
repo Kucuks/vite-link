@@ -1,5 +1,5 @@
-import { viteKit } from '../../plugin'
-import type { ViteKitAdapter, ViteKitOptions, ViteKitPluginOption } from '../../types'
+import { viteLink } from '../../plugin'
+import type { ViteLinkAdapter, ViteLinkOptions, ViteLinkPluginOption } from '../../types'
 import { runNestConfigDiagnostics, runNestSourceDiagnostics } from './diagnostics'
 import { createNestTypeScriptTransformPlugin } from './typescript-transform'
 
@@ -18,14 +18,14 @@ const NEST_ALWAYS_EXTERNAL = [
 
 const NEST_DEDUPE = ['@nestjs/common', '@nestjs/core', 'reflect-metadata', 'rxjs']
 
-export const nestAdapter: ViteKitAdapter = {
+export const nestAdapter: ViteLinkAdapter = {
   name: 'nest',
   plugins: (options) => [createNestTypeScriptTransformPlugin(options)],
   configDiagnostics: runNestConfigDiagnostics,
   sourceDiagnostics: runNestSourceDiagnostics,
 }
 
-export function defineNestViteKitConfig(options: ViteKitOptions = {}): ViteKitOptions {
+export function defineNestViteLinkConfig(options: ViteLinkOptions = {}): ViteLinkOptions {
   return {
     ...options,
     external: {
@@ -40,8 +40,8 @@ export function defineNestViteKitConfig(options: ViteKitOptions = {}): ViteKitOp
   }
 }
 
-export function nest(options: ViteKitOptions = {}): ViteKitPluginOption {
-  return viteKit(defineNestViteKitConfig(options))
+export function nest(options: ViteLinkOptions = {}): ViteLinkPluginOption {
+  return viteLink(defineNestViteLinkConfig(options))
 }
 
 export default nest

@@ -5,11 +5,11 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const repoRoot = resolve(fileURLToPath(new URL('..', import.meta.url)))
-const tempRoot = await mkdtemp(join(tmpdir(), 'vite-kit-smoke-'))
+const tempRoot = await mkdtemp(join(tmpdir(), 'vite-link-smoke-'))
 const projectRoot = join(tempRoot, 'app')
 const port = 31_000 + Math.floor(Math.random() * 5_000)
-const typescriptVersion = process.env.VITE_KIT_SMOKE_TYPESCRIPT ?? '6.0.3'
-const viteVersion = process.env.VITE_KIT_SMOKE_VITE ?? '^8.0.0'
+const typescriptVersion = process.env.VITE_LINK_SMOKE_TYPESCRIPT ?? '6.0.3'
+const viteVersion = process.env.VITE_LINK_SMOKE_VITE ?? '^8.0.0'
 
 try {
   await run('npm', ['pack', '--pack-destination', tempRoot], repoRoot)
@@ -22,11 +22,11 @@ try {
     join(projectRoot, 'package.json'),
     JSON.stringify(
       {
-        name: 'vite-kit-real-nest-smoke',
+        name: 'vite-link-real-nest-smoke',
         private: true,
         type: 'module',
         scripts: {
-          build: 'vite-kit build --strict',
+          build: 'vite-link build --strict',
           start: 'node --enable-source-maps dist/main.cjs',
         },
         dependencies: {},
@@ -61,7 +61,7 @@ try {
     join(projectRoot, 'vite.config.ts'),
     [
       "import { defineConfig } from 'vite'",
-      "import nest from 'vite-kit/nest'",
+      "import nest from 'vite-link/nest'",
       '',
       'export default defineConfig({',
       '  plugins: [',
@@ -83,7 +83,7 @@ try {
       '@Injectable()',
       'export class AppService {',
       '  health() {',
-      "    return { ok: true, source: 'vite-kit-smoke' }",
+      "    return { ok: true, source: 'vite-link-smoke' }",
       '  }',
       '}',
     ].join('\n'),
@@ -126,7 +126,7 @@ try {
       "import { NestFactory } from '@nestjs/core'",
       "import { FastifyAdapter } from '@nestjs/platform-fastify'",
       "import { AppModule } from './app.module'",
-      "import { runManagedBootstrap } from 'vite-kit/runtime'",
+      "import { runManagedBootstrap } from 'vite-link/runtime'",
       '',
       'export async function createApp() {',
       '  const app = await NestFactory.create(AppModule, new FastifyAdapter(), { logger: false })',
@@ -169,7 +169,7 @@ try {
     process.execPath,
     [
       '-e',
-      "const core = require('vite-kit'); const nest = require('vite-kit/nest'); const runtime = require('vite-kit/runtime'); if (typeof core.default !== 'function' || typeof core.viteKit !== 'function' || typeof nest.default !== 'function' || typeof runtime.runManagedBootstrap !== 'function') process.exit(1)",
+      "const core = require('vite-link'); const nest = require('vite-link/nest'); const runtime = require('vite-link/runtime'); if (typeof core.default !== 'function' || typeof core.viteLink !== 'function' || typeof nest.default !== 'function' || typeof runtime.runManagedBootstrap !== 'function') process.exit(1)",
     ],
     projectRoot,
   )
@@ -178,7 +178,7 @@ try {
     [
       '--input-type=module',
       '-e',
-      "import viteKit, { viteKit as named } from 'vite-kit'; if (typeof viteKit !== 'function' || viteKit !== named) process.exit(1)",
+      "import viteLink, { viteLink as named } from 'vite-link'; if (typeof viteLink !== 'function' || viteLink !== named) process.exit(1)",
     ],
     projectRoot,
   )
@@ -195,7 +195,7 @@ try {
 
   console.log(`[smoke] real Nest CLI/direct-build/start/HTTP checks passed on port ${port}`)
 } finally {
-  if (process.env.VITE_KIT_KEEP_SMOKE === '1') {
+  if (process.env.VITE_LINK_KEEP_SMOKE === '1') {
     console.log(`[smoke] kept fixture at ${tempRoot}`)
   } else {
     await rm(tempRoot, { recursive: true, force: true })
@@ -226,7 +226,7 @@ async function verifyServer(
     try {
       const response = await retryFetch(`http://127.0.0.1:${fixturePort}/health`, 60_000)
       const json = (await response.json()) as { ok?: boolean; source?: string }
-      if (json.ok !== true || json.source !== 'vite-kit-smoke') {
+      if (json.ok !== true || json.source !== 'vite-link-smoke') {
         throw new Error(`Unexpected /health response: ${JSON.stringify(json)}`)
       }
     } catch (error) {

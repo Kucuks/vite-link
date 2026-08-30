@@ -1,3 +1,3 @@
-export { default, defineViteKitConfig, isViteKitPlugin, viteKit } from './plugin'
+export { default, defineViteLinkConfig, isViteLinkPlugin, viteLink } from './plugin'
 export * from './types'
 export * from './runtime'

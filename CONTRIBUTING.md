@@ -1,12 +1,12 @@
 # Contributing
 
-Thanks for helping improve Vite Kit. The project stays useful by keeping its core small, framework-neutral, and predictable.
+Thanks for helping improve Vite Link. The project stays useful by keeping its core small, framework-neutral, and predictable.
 
 ## Set up
 
 ```bash
-git clone https://github.com/Kucuks/vite-kit.git
-cd vite-kit
+git clone https://github.com/Kucuks/vite-link.git
+cd vite-link
 npm ci
 npm run check
 ```

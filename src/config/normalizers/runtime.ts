@@ -2,15 +2,15 @@ import type {
   DiagnosticsOptions,
   EnvOptions,
   MetadataOptions,
-  ResolvedViteKitConfig,
+  ResolvedViteLinkConfig,
   TypecheckOptions,
-  ViteKitOptions,
+  ViteLinkOptions,
 } from '../../types'
 
 export type ResolveMode = 'development' | 'production' | 'diagnostics'
 
 export function normalizeTypecheck(
-  value: ViteKitOptions['typecheck'],
+  value: ViteLinkOptions['typecheck'],
   tsconfig: string,
 ): Required<TypecheckOptions> {
   if (value === false) return { dev: false, build: false, tsconfig }
@@ -22,7 +22,7 @@ export function normalizeTypecheck(
   }
 }
 
-export function normalizeMetadata(value: ViteKitOptions['metadata']): Required<MetadataOptions> {
+export function normalizeMetadata(value: ViteLinkOptions['metadata']): Required<MetadataOptions> {
   if (value === false || value === undefined) {
     return { enabled: false, commands: [], watch: false }
   }
@@ -34,7 +34,7 @@ export function normalizeMetadata(value: ViteKitOptions['metadata']): Required<M
 }
 
 export function normalizeDiagnostics(
-  value: ViteKitOptions['diagnostics'],
+  value: ViteLinkOptions['diagnostics'],
   mode: ResolveMode,
 ): Required<DiagnosticsOptions> {
   if (value === false) return { enabled: false, strict: false, scanSource: false, failOn: 'fatal' }
@@ -49,7 +49,7 @@ export function normalizeDiagnostics(
   }
 }
 
-export function normalizeDev(value: ViteKitOptions['dev']): ResolvedViteKitConfig['dev'] {
+export function normalizeDev(value: ViteLinkOptions['dev']): ResolvedViteLinkConfig['dev'] {
   return {
     strategy: value?.strategy ?? 'restart',
     port: value?.port ?? 3_000,
@@ -63,8 +63,8 @@ export function normalizeDev(value: ViteKitOptions['dev']): ResolvedViteKitConfi
 }
 
 export function normalizeMonorepo(
-  value: ViteKitOptions['monorepo'],
-): ResolvedViteKitConfig['monorepo'] {
+  value: ViteLinkOptions['monorepo'],
+): ResolvedViteLinkConfig['monorepo'] {
   return {
     dedupe: value?.dedupe ?? [],
   }

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import fg from 'fast-glob'
 import { describe, expect, it } from 'vitest'
 import { build } from 'vite'
-import { resolveViteKitConfig } from '../src/config/defaults'
+import { resolveViteLinkConfig } from '../src/config/defaults'
 import { createViteInlineConfig } from '../src/config/vite'
 import { createFixture } from './helpers'
 
@@ -14,7 +14,7 @@ describe('build formats', () => {
     await writeFile(join(root, 'package.json'), JSON.stringify({ type: 'module' }))
     await writeFile(join(root, 'src/value.ts'), "export const value = 'esm-output'\n")
     await writeFile(join(root, 'src/main.ts'), "export { value } from './value'\n")
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       diagnostics: false,
       typecheck: false,
@@ -32,7 +32,7 @@ describe('build formats', () => {
     await writeFile(join(root, 'package.json'), JSON.stringify({ type: 'module' }))
     await writeFile(join(root, 'src/value.ts'), "export const value = 'preserved-output'\n")
     await writeFile(join(root, 'src/main.ts'), "export { value } from './value'\n")
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       diagnostics: false,
       typecheck: false,

@@ -2,11 +2,11 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { resolve } from 'node:path'
 import pc from 'picocolors'
 import { loadEnv } from 'vite'
-import type { ResolvedViteKitConfig } from '../types'
+import type { ResolvedViteLinkConfig } from '../types'
 import {
-  isViteKitProcessMessage,
-  VITE_KIT_RUNTIME_READY,
-  VITE_KIT_SHUTDOWN_REQUEST,
+  isViteLinkProcessMessage,
+  VITE_LINK_RUNTIME_READY,
+  VITE_LINK_SHUTDOWN_REQUEST,
 } from './protocol'
 
 function getNodeEnv(): string {
@@ -21,7 +21,7 @@ export class ChildRunner {
   private runtimeManaged = false
 
   constructor(
-    private readonly config: ResolvedViteKitConfig,
+    private readonly config: ResolvedViteLinkConfig,
     private readonly onError: (error: unknown) => void = console.error,
   ) {}
 
@@ -62,13 +62,13 @@ export class ChildRunner {
 
     this.child = child
     this.runtimeManaged = false
-    console.log(pc.dim(`[vite-kit] app started with pid ${child.pid ?? 'unknown'}`))
+    console.log(pc.dim(`[vite-link] app started with pid ${child.pid ?? 'unknown'}`))
 
     child.on('message', (message) => {
       if (
         this.child === child &&
-        isViteKitProcessMessage(message) &&
-        message.type === VITE_KIT_RUNTIME_READY
+        isViteLinkProcessMessage(message) &&
+        message.type === VITE_LINK_RUNTIME_READY
       ) {
         this.runtimeManaged = true
       }
@@ -87,7 +87,9 @@ export class ChildRunner {
         this.child = undefined
         this.runtimeManaged = false
       }
-      console.log(pc.dim(`[vite-kit] app exited code=${code ?? 'null'} signal=${signal ?? 'null'}`))
+      console.log(
+        pc.dim(`[vite-link] app exited code=${code ?? 'null'} signal=${signal ?? 'null'}`),
+      )
     })
   }
 
@@ -136,7 +138,7 @@ export class ChildRunner {
       }
 
       if (runtimeManaged && child.connected) {
-        child.send({ type: VITE_KIT_SHUTDOWN_REQUEST }, (error) => {
+        child.send({ type: VITE_LINK_SHUTDOWN_REQUEST }, (error) => {
           if (!error) return
           this.onError(error)
           sendKillSignal(child, this.config.dev.killSignal, this.onError)

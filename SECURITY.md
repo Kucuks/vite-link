@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Please do not open a public issue for a suspected vulnerability. Use [GitHub private vulnerability reporting](https://github.com/Kucuks/vite-kit/security/advisories/new) and include:
+Please do not open a public issue for a suspected vulnerability. Use [GitHub private vulnerability reporting](https://github.com/Kucuks/vite-link/security/advisories/new) and include:
 
 - the affected version or commit;
 - a minimal reproduction;

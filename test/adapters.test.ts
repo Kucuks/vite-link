@@ -2,10 +2,10 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { build } from 'vite'
-import { resolveViteKitConfig } from '../src/config/defaults'
+import { resolveViteLinkConfig } from '../src/config/defaults'
 import { runDiagnostics } from '../src/diagnostics'
-import { viteKit } from '../src/plugin'
-import type { ViteKitAdapter } from '../src/types'
+import { viteLink } from '../src/plugin'
+import type { ViteLinkAdapter } from '../src/types'
 import { createFixture } from './helpers'
 
 describe('adapter API', () => {
@@ -20,7 +20,7 @@ describe('adapter API', () => {
         },
       },
     ])
-    const adapter: ViteKitAdapter = {
+    const adapter: ViteLinkAdapter = {
       name: 'test-adapter',
       plugins: pluginFactory,
       configDiagnostics: () => [
@@ -36,14 +36,14 @@ describe('adapter API', () => {
       root,
       configFile: false,
       logLevel: 'silent',
-      plugins: [viteKit({ root, adapters: [adapter], diagnostics: false, typecheck: false })],
+      plugins: [viteLink({ root, adapters: [adapter], diagnostics: false, typecheck: false })],
     })
 
     const output = await readFile(join(root, 'dist/main.cjs'), 'utf8')
     expect(output).toContain('after-adapter')
     expect(pluginFactory).toHaveBeenCalledTimes(1)
 
-    const config = await resolveViteKitConfig({ root, adapters: [adapter] }, 'diagnostics')
+    const config = await resolveViteLinkConfig({ root, adapters: [adapter] }, 'diagnostics')
     const diagnostics = await runDiagnostics(config)
     expect(diagnostics.map(({ code }) => code)).toEqual(
       expect.arrayContaining(['TEST_ADAPTER_CONFIG', 'TEST_ADAPTER_SOURCE']),

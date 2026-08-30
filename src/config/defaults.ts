@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import type { ResolvedViteKitConfig, ViteKitOptions } from '../types'
+import type { ResolvedViteLinkConfig, ViteLinkOptions } from '../types'
 import { fileExists } from '../core/fs'
 import { readNearestPackageJson } from '../core/package'
 import { readTsconfig } from '../core/tsconfig'
@@ -15,13 +15,13 @@ import {
   normalizeTypecheck,
   type ResolveMode,
 } from './normalizers/runtime'
-import { validateResolvedViteKitConfig } from './validate'
+import { validateResolvedViteLinkConfig } from './validate'
 
-export async function resolveViteKitConfig(
-  options: ViteKitOptions = {},
+export async function resolveViteLinkConfig(
+  options: ViteLinkOptions = {},
   mode: ResolveMode = 'development',
   viteMode = mode === 'production' ? 'production' : 'development',
-): Promise<ResolvedViteKitConfig> {
+): Promise<ResolvedViteLinkConfig> {
   const root = resolve(options.root ?? process.cwd())
   const entry = resolve(root, options.entry ?? 'src/main.ts')
   const preferredTsconfig = resolve(root, options.tsconfig ?? 'tsconfig.build.json')
@@ -31,7 +31,7 @@ export async function resolveViteKitConfig(
   const tsconfig = await readTsconfig(tsconfigPath)
   const packageInfo = await readNearestPackageJson(root)
 
-  const config: ResolvedViteKitConfig = {
+  const config: ResolvedViteLinkConfig = {
     root,
     mode: viteMode,
     entry,
@@ -54,7 +54,7 @@ export async function resolveViteKitConfig(
     tsconfigRaw: tsconfig.json,
     originalOptions: options,
   }
-  await validateResolvedViteKitConfig(config)
+  await validateResolvedViteLinkConfig(config)
   return config
 }
 

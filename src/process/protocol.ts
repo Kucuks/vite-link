@@ -1,11 +1,11 @@
-export const VITE_KIT_RUNTIME_READY = 'vite-kit:runtime-ready'
-export const VITE_KIT_SHUTDOWN_REQUEST = 'vite-kit:shutdown-request'
+export const VITE_LINK_RUNTIME_READY = 'vite-link:runtime-ready'
+export const VITE_LINK_SHUTDOWN_REQUEST = 'vite-link:shutdown-request'
 
-export interface ViteKitProcessMessage {
-  type: typeof VITE_KIT_RUNTIME_READY | typeof VITE_KIT_SHUTDOWN_REQUEST
+export interface ViteLinkProcessMessage {
+  type: typeof VITE_LINK_RUNTIME_READY | typeof VITE_LINK_SHUTDOWN_REQUEST
 }
 
-export function isViteKitProcessMessage(value: unknown): value is ViteKitProcessMessage {
+export function isViteLinkProcessMessage(value: unknown): value is ViteLinkProcessMessage {
   if (!value || typeof value !== 'object' || !('type' in value)) return false
-  return value.type === VITE_KIT_RUNTIME_READY || value.type === VITE_KIT_SHUTDOWN_REQUEST
+  return value.type === VITE_LINK_RUNTIME_READY || value.type === VITE_LINK_SHUTDOWN_REQUEST
 }

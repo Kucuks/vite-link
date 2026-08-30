@@ -30,7 +30,7 @@ export function createTsconfigPathResolverPlugin(
     )
 
   return {
-    name: 'vite-kit:module-canonicalizer',
+    name: 'vite-link:module-canonicalizer',
     enforce: 'pre',
     resolveId(source, importer) {
       const sourceId = stripQuery(source)

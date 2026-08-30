@@ -1,13 +1,13 @@
 # Configuration reference
 
-Vite Kit is configured inside `vite.config.ts`. All paths are resolved from `root`, which defaults to the current working directory.
+Vite Link is configured inside `vite.config.ts`. All paths are resolved from `root`, which defaults to the current working directory.
 
 ```ts
 import { defineConfig } from 'vite'
-import viteKit from 'vite-kit'
+import viteLink from 'vite-link'
 
 export default defineConfig({
-  plugins: [viteKit({ entry: 'src/main.ts' })],
+  plugins: [viteLink({ entry: 'src/main.ts' })],
 })
 ```
 
@@ -41,7 +41,7 @@ export default defineConfig({
 
 Supported `minify` values are `false`, `oxc`, `esbuild`, and `terser`. Terser is optional in Vite and must be installed by the consuming project when selected.
 
-The build output directory must resolve inside the project root. Vite Kit rejects parent-directory escapes and output paths that traverse a symlink outside the project before Vite can empty or write the directory.
+The build output directory must resolve inside the project root. Vite Link rejects parent-directory escapes and output paths that traverse a symlink outside the project before Vite can empty or write the directory.
 
 ## Development process
 
@@ -97,7 +97,7 @@ assets: [
 ]
 ```
 
-Vite Kit rejects output collisions, project-boundary escapes, and unsafe symlink targets. If `src/i18n` exists and is not already configured, it is copied relative to `src` without restarting the child.
+Vite Link rejects output collisions, project-boundary escapes, and unsafe symlink targets. If `src/i18n` exists and is not already configured, it is copied relative to `src` without restarting the child.
 
 ## Dependencies and monorepos
 
@@ -122,7 +122,7 @@ Patterns accept strings or regular expressions. `noExternal` and `exclude` take 
 
 ## Environment variables
 
-Vite mode and environment-file precedence remain active. Vite Kit does not inline arbitrary environment variables.
+Vite mode and environment-file precedence remain active. Vite Link does not inline arbitrary environment variables.
 
 ```ts
 env: {
@@ -136,7 +136,7 @@ Secret-looking names are refused when `forbidInlineSecrets` is enabled. Runtime 
 
 ## Metadata commands
 
-Vite Kit does not guess how a project generates OpenAPI, GraphQL, ORM, or other metadata. Commands are explicit and project-owned.
+Vite Link does not guess how a project generates OpenAPI, GraphQL, ORM, or other metadata. Commands are explicit and project-owned.
 
 ```ts
 metadata: {

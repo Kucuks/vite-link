@@ -1,8 +1,10 @@
 import { realpath } from 'node:fs/promises'
 import { dirname, isAbsolute, relative, resolve } from 'node:path'
-import type { ResolvedViteKitConfig } from '../types'
+import type { ResolvedViteLinkConfig } from '../types'
 
-export async function validateResolvedViteKitConfig(config: ResolvedViteKitConfig): Promise<void> {
+export async function validateResolvedViteLinkConfig(
+  config: ResolvedViteLinkConfig,
+): Promise<void> {
   const errors = [
     ...validateDev(config),
     ...(await validateBuild(config)),
@@ -11,10 +13,10 @@ export async function validateResolvedViteKitConfig(config: ResolvedViteKitConfi
     ...validateAssets(config),
   ]
   if (errors.length === 0) return
-  throw new Error(`Invalid Vite Kit configuration:\n- ${errors.join('\n- ')}`)
+  throw new Error(`Invalid Vite Link configuration:\n- ${errors.join('\n- ')}`)
 }
 
-function validateDev(config: ResolvedViteKitConfig): string[] {
+function validateDev(config: ResolvedViteLinkConfig): string[] {
   const errors: string[] = []
   if (!Number.isInteger(config.dev.port) || config.dev.port < 0 || config.dev.port > 65_535) {
     errors.push('`dev.port` must be an integer between 0 and 65535.')
@@ -28,7 +30,7 @@ function validateDev(config: ResolvedViteKitConfig): string[] {
   return errors
 }
 
-async function validateBuild(config: ResolvedViteKitConfig): Promise<string[]> {
+async function validateBuild(config: ResolvedViteLinkConfig): Promise<string[]> {
   const errors: string[] = []
   if (typeof config.build.outDir !== 'string' || !config.build.outDir.trim()) {
     errors.push('`build.outDir` must be a non-empty string.')
@@ -80,7 +82,7 @@ function isOutside(relativePath: string): boolean {
 
 const separator = process.platform === 'win32' ? '\\' : '/'
 
-function validateAdapters(config: ResolvedViteKitConfig): string[] {
+function validateAdapters(config: ResolvedViteLinkConfig): string[] {
   const errors: string[] = []
   const names = new Set<string>()
   for (const adapter of config.adapters) {
@@ -95,13 +97,13 @@ function validateAdapters(config: ResolvedViteKitConfig): string[] {
   return errors
 }
 
-function validateMetadata(config: ResolvedViteKitConfig): string[] {
+function validateMetadata(config: ResolvedViteLinkConfig): string[] {
   return config.metadata.commands.some((command) => typeof command !== 'string' || !command.trim())
     ? ['`metadata.commands` must not contain empty commands.']
     : []
 }
 
-function validateAssets(config: ResolvedViteKitConfig): string[] {
+function validateAssets(config: ResolvedViteLinkConfig): string[] {
   const errors: string[] = []
   for (const [index, asset] of config.assets.entries()) {
     const includes = Array.isArray(asset.include) ? asset.include : [asset.include]

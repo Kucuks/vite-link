@@ -79,7 +79,7 @@ export interface EnvOptions {
   forbidInlineSecrets?: boolean
 }
 
-export interface ViteKitOptions {
+export interface ViteLinkOptions {
   root?: string
   entry?: string
   tsconfig?: string
@@ -95,10 +95,10 @@ export interface ViteKitOptions {
   monorepo?: MonorepoOptions
   env?: EnvOptions
   tsconfigPaths?: boolean
-  adapters?: ViteKitAdapter[]
+  adapters?: ViteLinkAdapter[]
 }
 
-export interface ResolvedViteKitConfig {
+export interface ResolvedViteLinkConfig {
   root: string
   mode: string
   entry: string
@@ -115,11 +115,11 @@ export interface ResolvedViteKitConfig {
   monorepo: Required<MonorepoOptions>
   env: Required<EnvOptions>
   tsconfigPaths: boolean
-  adapters: ViteKitAdapter[]
+  adapters: ViteLinkAdapter[]
   packageJsonPath: string | undefined
   tsconfigRaw: Record<string, unknown>
   packageJson: Record<string, unknown>
-  originalOptions: ViteKitOptions
+  originalOptions: ViteLinkOptions
 }
 
 export interface Diagnostic {
@@ -131,33 +131,33 @@ export interface Diagnostic {
 }
 
 export interface SourceDiagnosticContext {
-  config: ResolvedViteKitConfig
+  config: ResolvedViteLinkConfig
   file: string
   text: string
   sourceFile: ts.SourceFile
 }
 
-export interface ViteKitAdapter {
+export interface ViteLinkAdapter {
   name: string
-  plugins?: (options: ViteKitOptions) => Plugin[]
-  configDiagnostics?: (config: ResolvedViteKitConfig) => Diagnostic[] | Promise<Diagnostic[]>
+  plugins?: (options: ViteLinkOptions) => Plugin[]
+  configDiagnostics?: (config: ResolvedViteLinkConfig) => Diagnostic[] | Promise<Diagnostic[]>
   sourceDiagnostics?: (context: SourceDiagnosticContext) => Diagnostic[] | Promise<Diagnostic[]>
 }
 
-export interface ViteKitPlugin extends Plugin {
-  __viteKit?: {
-    options: ViteKitOptions
+export interface ViteLinkPlugin extends Plugin {
+  __viteLink?: {
+    options: ViteLinkOptions
   }
 }
 
-export interface ViteKitManagedPlugin extends Plugin {
-  __viteKitManaged?: true
+export interface ViteLinkManagedPlugin extends Plugin {
+  __viteLinkManaged?: true
 }
 
-export type ViteKitPluginOption = PluginOption[]
+export type ViteLinkPluginOption = PluginOption[]
 
-export interface LoadedViteKitConfig {
+export interface LoadedViteLinkConfig {
   viteConfig: UserConfig
-  viteKitOptions: ViteKitOptions
+  viteLinkOptions: ViteLinkOptions
   configFile: string | undefined
 }

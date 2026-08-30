@@ -2,7 +2,7 @@ import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { copyAssets, copyChangedAsset, findMatchingAssetPattern, watchAssets } from '../src/assets'
-import { resolveViteKitConfig } from '../src/config/defaults'
+import { resolveViteLinkConfig } from '../src/config/defaults'
 import { createFixture } from './helpers'
 
 describe('asset pipeline', () => {
@@ -11,7 +11,7 @@ describe('asset pipeline', () => {
     await mkdir(join(root, 'src/schema'), { recursive: true })
     await writeFile(join(root, 'src/schema/app.graphql'), 'type Query { ok: Boolean }')
 
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       assets: [{ include: ['src/**/*.graphql'], base: 'src', restart: true }],
     })
@@ -29,7 +29,7 @@ describe('asset pipeline', () => {
     await mkdir(join(root, 'src/second'), { recursive: true })
     await writeFile(join(root, 'src/first/shared.txt'), 'first')
     await writeFile(join(root, 'src/second/shared.txt'), 'second')
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       assets: [
         { include: 'src/first/*.txt', base: 'src/first', outDir: 'dist' },
@@ -47,7 +47,7 @@ describe('asset pipeline', () => {
     const target = join(root, 'dist/schema/app.graphql')
     await writeFile(source, 'type Query { ok: Boolean }')
 
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       assets: [{ include: ['src/**/*.graphql'], base: 'src', restart: true }],
     })
@@ -64,7 +64,7 @@ describe('asset pipeline', () => {
 
   it('matches changed assets by path pattern without requiring the file to exist', async () => {
     const root = await createFixture()
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       assets: [
         { include: ['src/**/*.graphql'], exclude: ['src/**/__generated__/**'], restart: true },
@@ -82,7 +82,7 @@ describe('asset pipeline', () => {
     await mkdir(join(root, 'src/schema'), { recursive: true })
     await writeFile(join(root, 'src/schema/schema-a.graphql'), 'a')
     await writeFile(join(root, 'src/schema/schema-c.graphql'), 'c')
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       assets: [{ include: ['src/**/schema-[ab].@(graphql|gql)'], base: 'src' }],
     })
@@ -99,7 +99,7 @@ describe('asset pipeline', () => {
     const root = await createFixture()
     const outside = join(root, 'outside.txt')
     await writeFile(outside, 'outside')
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       assets: [{ include: ['outside.txt'], base: 'src', outDir: 'dist' }],
     })
@@ -116,7 +116,7 @@ describe('asset pipeline', () => {
       const linked = join(root, 'src/linked.txt')
       await writeFile(external, 'secret')
       await symlink(external, linked)
-      const config = await resolveViteKitConfig({
+      const config = await resolveViteLinkConfig({
         root,
         assets: [{ include: ['src/linked.txt'], base: 'src', outDir: 'dist' }],
       })
@@ -134,7 +134,7 @@ describe('asset pipeline', () => {
       await mkdir(join(root, 'dist'), { recursive: true })
       await writeFile(join(root, 'src/linked/public.txt'), 'public')
       await symlink(externalRoot, join(root, 'dist/linked'))
-      const config = await resolveViteKitConfig({
+      const config = await resolveViteLinkConfig({
         root,
         assets: [{ include: ['src/**/*.txt'], base: 'src', outDir: 'dist' }],
       })
@@ -145,7 +145,7 @@ describe('asset pipeline', () => {
 
   it('rejects asset watch roots outside the project root', async () => {
     const root = await createFixture()
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       assets: [{ include: ['../outside/**/*.txt'], base: '..', outDir: 'dist' }],
     })
@@ -156,7 +156,7 @@ describe('asset pipeline', () => {
   it('watches glob-based asset patterns with Chokidar 4', async () => {
     const root = await createFixture()
     await mkdir(join(root, 'src/schema'), { recursive: true })
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       assets: [{ include: ['src/**/*.graphql'], base: 'src', restart: true }],
     })

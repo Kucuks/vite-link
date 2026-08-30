@@ -1,10 +1,10 @@
 import { resolve } from 'node:path'
-import type { AssetPattern, ViteKitOptions } from '../../types'
+import type { AssetPattern, ViteLinkOptions } from '../../types'
 import { dirExists } from '../../core/fs'
 
 export async function normalizeAssets(
   root: string,
-  assets: ViteKitOptions['assets'],
+  assets: ViteLinkOptions['assets'],
 ): Promise<AssetPattern[]> {
   const configured = assets ?? []
   const defaults: AssetPattern[] = []

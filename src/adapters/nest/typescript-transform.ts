@@ -1,17 +1,17 @@
 import { dirname, resolve } from 'node:path'
 import ts from 'typescript'
 import type { Plugin } from 'vite'
-import { resolveViteKitConfig } from '../../config/defaults'
+import { resolveViteLinkConfig } from '../../config/defaults'
 import { toPosixPath } from '../../core/fs'
 import { getCompilerOptions } from '../../core/tsconfig'
-import type { ResolvedViteKitConfig, ViteKitOptions } from '../../types'
+import type { ResolvedViteLinkConfig, ViteLinkOptions } from '../../types'
 
 const TS_FILE_RE = /\.(?:[cm]?ts)$/
 const REFLECT_METADATA_RE =
   /(?:import\s+['"]reflect-metadata['"]|from\s+['"]reflect-metadata['"]|require\(['"]reflect-metadata['"]\))/
 
 export function createNestTypeScriptTransformPlugin(
-  options: ViteKitOptions | ResolvedViteKitConfig,
+  options: ViteLinkOptions | ResolvedViteLinkConfig,
 ): Plugin {
   let resolved = isResolvedConfig(options) ? Promise.resolve(options) : undefined
   let compilerOptions: ts.CompilerOptions | undefined
@@ -19,7 +19,7 @@ export function createNestTypeScriptTransformPlugin(
 
   const prepare = async (viteRoot?: string, viteMode?: string) => {
     const root = options.root ?? viteRoot
-    resolved ??= resolveViteKitConfig(
+    resolved ??= resolveViteLinkConfig(
       {
         ...options,
         ...(root ? { root } : {}),
@@ -33,7 +33,7 @@ export function createNestTypeScriptTransformPlugin(
   }
 
   return {
-    name: 'vite-kit:nest-typescript-decorators',
+    name: 'vite-link:nest-typescript-decorators',
     enforce: 'pre',
 
     async configResolved(config) {
@@ -71,12 +71,12 @@ function hasDecoratorToken(code: string): boolean {
 }
 
 function isResolvedConfig(
-  value: ViteKitOptions | ResolvedViteKitConfig,
-): value is ResolvedViteKitConfig {
+  value: ViteLinkOptions | ResolvedViteLinkConfig,
+): value is ResolvedViteLinkConfig {
   return 'originalOptions' in value && 'packageJson' in value
 }
 
-function createCompilerOptions(config: ResolvedViteKitConfig): ts.CompilerOptions {
+function createCompilerOptions(config: ResolvedViteLinkConfig): ts.CompilerOptions {
   const rawOptions = getCompilerOptions(config.tsconfigRaw)
   const converted = ts.convertCompilerOptionsFromJson(
     rawOptions,

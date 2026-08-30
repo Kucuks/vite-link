@@ -25,7 +25,7 @@ interface PackResult {
 const manifest = JSON.parse(readFileSync('package.json', 'utf8')) as PackageManifest
 const errors: string[] = []
 
-if (manifest.name !== 'vite-kit') errors.push('package name must be `vite-kit`')
+if (manifest.name !== 'vite-link') errors.push('package name must be `vite-link`')
 if (manifest.private === true) errors.push('package must not be marked private')
 if (manifest.publishConfig?.access !== 'public') {
   errors.push('publishConfig.access must be `public`')
@@ -90,7 +90,7 @@ if (errors.length > 0) {
 }
 
 process.stdout.write(
-  `[vite-kit] package inspection passed (${packed?.files.length ?? 0} files, ${packed?.size ?? 0} bytes compressed)\n`,
+  `[vite-link] package inspection passed (${packed?.files.length ?? 0} files, ${packed?.size ?? 0} bytes compressed)\n`,
 )
 
 function runNpm(args: string[]): string {

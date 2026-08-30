@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
-import type { ResolvedViteKitConfig } from '../types'
+import type { ResolvedViteLinkConfig } from '../types'
 
 interface CommandSpec {
   command: string
@@ -9,7 +9,7 @@ interface CommandSpec {
   shell: boolean
 }
 
-export async function runTypecheck(config: ResolvedViteKitConfig): Promise<void> {
+export async function runTypecheck(config: ResolvedViteLinkConfig): Promise<void> {
   const tsc = resolveTypeScriptCompiler(config.root)
   await runCommand(
     tsc.command,
@@ -21,7 +21,7 @@ export async function runTypecheck(config: ResolvedViteKitConfig): Promise<void>
   )
 }
 
-export function startTypecheckWatcher(config: ResolvedViteKitConfig): ChildProcess | undefined {
+export function startTypecheckWatcher(config: ResolvedViteLinkConfig): ChildProcess | undefined {
   if (config.typecheck.dev !== 'async') return undefined
 
   const tsc = resolveTypeScriptCompiler(config.root)
@@ -36,7 +36,7 @@ export function startTypecheckWatcher(config: ResolvedViteKitConfig): ChildProce
     },
   )
   child.on('error', (error) =>
-    console.error(`[vite-kit] typecheck watcher failed: ${error.message}`),
+    console.error(`[vite-link] typecheck watcher failed: ${error.message}`),
   )
   return child
 }

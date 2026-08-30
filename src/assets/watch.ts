@@ -1,6 +1,6 @@
 import chokidar from 'chokidar'
 import { dirname, isAbsolute, relative, resolve } from 'node:path'
-import type { ResolvedViteKitConfig } from '../types'
+import type { ResolvedViteLinkConfig } from '../types'
 import { TaskQueue } from '../core/concurrency'
 import { toPosixPath } from '../core/fs'
 import { copyChangedAsset } from './copy'
@@ -11,7 +11,7 @@ export interface AssetWatcher {
 }
 
 export function watchAssets(
-  config: ResolvedViteKitConfig,
+  config: ResolvedViteLinkConfig,
   onRestartRequired: (file: string) => void | Promise<void>,
   onError: (error: unknown) => void = console.error,
 ): AssetWatcher | undefined {
@@ -60,7 +60,7 @@ export function watchAssets(
   }
 }
 
-export function getAssetWatchRoots(config: ResolvedViteKitConfig): string[] {
+export function getAssetWatchRoots(config: ResolvedViteLinkConfig): string[] {
   const roots = new Set<string>()
   for (const asset of config.assets) {
     const includes = Array.isArray(asset.include) ? asset.include : [asset.include]
@@ -98,7 +98,7 @@ function getStaticWatchParent(pattern: string): string {
   return parent || '/'
 }
 
-function isIgnoredWatchPath(config: ResolvedViteKitConfig, path: string): boolean {
+function isIgnoredWatchPath(config: ResolvedViteLinkConfig, path: string): boolean {
   const normalized = toPosixPath(path)
   if (normalized.split('/').includes('node_modules')) return true
 

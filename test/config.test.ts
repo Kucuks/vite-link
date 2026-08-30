@@ -4,8 +4,8 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import nest from '../src/adapters/nest'
 import { createCliContext } from '../src/cli/context'
-import { resolveViteKitConfig } from '../src/config/defaults'
-import { mergeUserViteConfig, stripViteKitPlugins } from '../src/config/load'
+import { resolveViteLinkConfig } from '../src/config/defaults'
+import { mergeUserViteConfig, stripViteLinkPlugins } from '../src/config/load'
 import { createExternalPredicate, createViteInlineConfig } from '../src/config/vite'
 import { createFixture, resolveNestTestConfig as resolveNestViteConfig } from './helpers'
 
@@ -13,46 +13,46 @@ describe('config resolution', () => {
   it('rejects invalid lifecycle, output and adapter configuration', async () => {
     const root = await createFixture()
     await expect(
-      resolveViteKitConfig({
+      resolveViteLinkConfig({
         root,
         dev: { port: 70_000, debounce: -1 },
         build: { entryFileName: '../outside.cjs' },
         adapters: [{ name: 'duplicate' }, { name: 'duplicate' }],
       }),
-    ).rejects.toThrow(/Invalid Vite Kit configuration/)
+    ).rejects.toThrow(/Invalid Vite Link configuration/)
   })
 
   it('rejects build output directories outside the project root', async () => {
     const root = await createFixture()
 
-    await expect(resolveViteKitConfig({ root, build: { outDir: '../outside' } })).rejects.toThrow(
+    await expect(resolveViteLinkConfig({ root, build: { outDir: '../outside' } })).rejects.toThrow(
       /build\.outDir.*inside the project root/,
     )
   })
 
   it('rejects build output directories that escape through a symlink', async () => {
     const root = await createFixture()
-    const outside = await mkdtemp(join(tmpdir(), 'vite-kit-output-'))
+    const outside = await mkdtemp(join(tmpdir(), 'vite-link-output-'))
     await symlink(
       outside,
       join(root, 'linked-dist'),
       process.platform === 'win32' ? 'junction' : 'dir',
     )
 
-    await expect(resolveViteKitConfig({ root, build: { outDir: 'linked-dist' } })).rejects.toThrow(
+    await expect(resolveViteLinkConfig({ root, build: { outDir: 'linked-dist' } })).rejects.toThrow(
       /build\.outDir.*inside the project root/,
     )
   })
 
   it('keeps the generic core free of Nest transforms and defaults', async () => {
     const root = await createFixture()
-    const config = await resolveViteKitConfig({ root })
+    const config = await resolveViteLinkConfig({ root })
     const vite = createViteInlineConfig(config)
 
     expect(config.adapters).toEqual([])
     expect(config.external.alwaysExternal).not.toContain('@nestjs/core')
     expect(vite.plugins?.map((plugin) => plugin && 'name' in plugin && plugin.name)).not.toContain(
-      'vite-kit:nest-typescript-decorators',
+      'vite-link:nest-typescript-decorators',
     )
   })
 
@@ -97,14 +97,14 @@ describe('config resolution', () => {
     expect(external('./app.module')).toBe(false)
   })
 
-  it('strips Vite Kit plugins from CLI-managed Vite config to avoid duplicate lifecycle work', () => {
+  it('strips Vite Link plugins from CLI-managed Vite config to avoid duplicate lifecycle work', () => {
     const other = { name: 'other-plugin' }
-    const stripped = stripViteKitPlugins({ plugins: [nest({ entry: 'src/main.ts' }), other] })
+    const stripped = stripViteLinkPlugins({ plugins: [nest({ entry: 'src/main.ts' }), other] })
 
     expect(stripped.plugins).toEqual([other])
   })
 
-  it('merges user config without re-running the Vite Kit plugin side effects', () => {
+  it('merges user config without re-running the Vite Link plugin side effects', () => {
     const other = { name: 'other-plugin' }
     const merged = mergeUserViteConfig(
       { build: { outDir: 'dist' } },

@@ -1,11 +1,11 @@
 import fg from 'fast-glob'
 import { fileExists, readText } from '../../core/fs'
 import { getCompilerOptions } from '../../core/tsconfig'
-import type { Diagnostic, ResolvedViteKitConfig, SourceDiagnosticContext } from '../../types'
+import type { Diagnostic, ResolvedViteLinkConfig, SourceDiagnosticContext } from '../../types'
 import ts from 'typescript'
 
 export async function runNestConfigDiagnostics(
-  config: ResolvedViteKitConfig,
+  config: ResolvedViteLinkConfig,
 ): Promise<Diagnostic[]> {
   const diagnostics = checkNestCompilerOptions(config)
   if (!(await fileExists(config.entry))) return diagnostics
@@ -22,7 +22,7 @@ export async function runNestConfigDiagnostics(
   return diagnostics
 }
 
-async function projectUsesShutdownHooks(config: ResolvedViteKitConfig): Promise<boolean> {
+async function projectUsesShutdownHooks(config: ResolvedViteLinkConfig): Promise<boolean> {
   const files = await fg(['**/*.ts'], {
     cwd: config.sourceRoot,
     absolute: true,
@@ -50,7 +50,7 @@ export function runNestSourceDiagnostics({
   ]
 }
 
-function checkNestCompilerOptions(config: ResolvedViteKitConfig): Diagnostic[] {
+function checkNestCompilerOptions(config: ResolvedViteLinkConfig): Diagnostic[] {
   const options = getCompilerOptions(config.tsconfigRaw)
   const diagnostics: Diagnostic[] = []
 

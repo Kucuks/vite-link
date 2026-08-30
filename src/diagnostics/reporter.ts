@@ -10,11 +10,11 @@ const ORDER: Record<DiagnosticSeverity, number> = {
 
 export function reportDiagnostics(diagnostics: Diagnostic[]): void {
   if (diagnostics.length === 0) {
-    console.log(pc.green('[vite-kit] diagnostics clean'))
+    console.log(pc.green('[vite-link] diagnostics clean'))
     return
   }
 
-  console.log(pc.bold('\nVite Kit Diagnostics\n'))
+  console.log(pc.bold('\nVite Link Diagnostics\n'))
 
   for (const diagnostic of diagnostics) {
     const label = colorSeverity(diagnostic.severity, diagnostic.severity.toUpperCase())

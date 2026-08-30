@@ -1,9 +1,9 @@
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  isViteKitProcessMessage,
-  VITE_KIT_RUNTIME_READY,
-  VITE_KIT_SHUTDOWN_REQUEST,
+  isViteLinkProcessMessage,
+  VITE_LINK_RUNTIME_READY,
+  VITE_LINK_SHUTDOWN_REQUEST,
 } from './process/protocol'
 
 export interface ManagedApp {
@@ -58,7 +58,7 @@ export async function runManagedBootstrap<T extends ManagedApp>(
   }
 
   const onMessage = (message: unknown) => {
-    if (isViteKitProcessMessage(message) && message.type === VITE_KIT_SHUTDOWN_REQUEST) {
+    if (isViteLinkProcessMessage(message) && message.type === VITE_LINK_SHUTDOWN_REQUEST) {
       void shutdown()
     }
   }
@@ -67,7 +67,7 @@ export async function runManagedBootstrap<T extends ManagedApp>(
   process.once('SIGINT', () => void shutdown('SIGINT'))
   process.on('message', onMessage)
   app = await startup
-  if (!closing) process.send?.({ type: VITE_KIT_RUNTIME_READY })
+  if (!closing) process.send?.({ type: VITE_LINK_RUNTIME_READY })
 
   return app
 }

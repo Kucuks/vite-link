@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import type { Diagnostic, ResolvedViteKitConfig } from '../types'
+import type { Diagnostic, ResolvedViteLinkConfig } from '../types'
 import { fileExists, readText } from '../core/fs'
 import { getCompilerOptions } from '../core/tsconfig'
 import { looksLikeSecretName } from '../core/env-policy'
@@ -16,7 +16,7 @@ const NATIVE_DEPENDENCIES = [
   '@prisma/client',
 ]
 
-export async function runConfigDiagnostics(config: ResolvedViteKitConfig): Promise<Diagnostic[]> {
+export async function runConfigDiagnostics(config: ResolvedViteLinkConfig): Promise<Diagnostic[]> {
   return [
     ...checkTsconfig(config),
     ...(await checkEntry(config)),
@@ -27,7 +27,7 @@ export async function runConfigDiagnostics(config: ResolvedViteKitConfig): Promi
   ]
 }
 
-function checkMetadata(config: ResolvedViteKitConfig): Diagnostic[] {
+function checkMetadata(config: ResolvedViteLinkConfig): Diagnostic[] {
   if (!config.metadata.enabled || config.metadata.commands.length > 0) return []
   return [
     {
@@ -39,7 +39,7 @@ function checkMetadata(config: ResolvedViteKitConfig): Diagnostic[] {
   ]
 }
 
-function checkTsconfig(config: ResolvedViteKitConfig): Diagnostic[] {
+function checkTsconfig(config: ResolvedViteLinkConfig): Diagnostic[] {
   const options = getCompilerOptions(config.tsconfigRaw)
   const diagnostics: Diagnostic[] = []
 
@@ -56,7 +56,7 @@ function checkTsconfig(config: ResolvedViteKitConfig): Diagnostic[] {
   return diagnostics
 }
 
-async function checkEntry(config: ResolvedViteKitConfig): Promise<Diagnostic[]> {
+async function checkEntry(config: ResolvedViteLinkConfig): Promise<Diagnostic[]> {
   if (!(await fileExists(config.entry))) {
     return [
       {
@@ -71,7 +71,7 @@ async function checkEntry(config: ResolvedViteKitConfig): Promise<Diagnostic[]> 
   return []
 }
 
-function checkPackage(config: ResolvedViteKitConfig): Diagnostic[] {
+function checkPackage(config: ResolvedViteLinkConfig): Diagnostic[] {
   const dependencies = {
     ...(isRecord(config.packageJson.dependencies) ? config.packageJson.dependencies : {}),
     ...(isRecord(config.packageJson.optionalDependencies)
@@ -91,7 +91,7 @@ function checkPackage(config: ResolvedViteKitConfig): Diagnostic[] {
   }))
 }
 
-function checkEnvInlining(config: ResolvedViteKitConfig): Diagnostic[] {
+function checkEnvInlining(config: ResolvedViteLinkConfig): Diagnostic[] {
   if (!config.env.forbidInlineSecrets) return []
   return config.env.inline.filter(looksLikeSecretName).map((key) => ({
     code: 'ENV_INLINE_SECRET_BLOCKED',
@@ -101,7 +101,7 @@ function checkEnvInlining(config: ResolvedViteKitConfig): Diagnostic[] {
   }))
 }
 
-async function checkViteConfigText(config: ResolvedViteKitConfig): Promise<Diagnostic[]> {
+async function checkViteConfigText(config: ResolvedViteLinkConfig): Promise<Diagnostic[]> {
   const diagnostics: Diagnostic[] = []
   for (const file of ['vite.config.ts', 'vite.config.mts', 'vite.config.js', 'vite.config.mjs']) {
     const path = resolve(config.root, file)

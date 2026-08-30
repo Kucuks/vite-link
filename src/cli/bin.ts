@@ -23,7 +23,7 @@ withGlobalOptions(
 ).action(run(devCommand))
 
 withGlobalOptions(cli.command('build', 'Production build')).action(run(buildCommand))
-withGlobalOptions(cli.command('diagnostics', 'Run Vite Kit diagnostics')).action(
+withGlobalOptions(cli.command('diagnostics', 'Run Vite Link diagnostics')).action(
   run(diagnosticsCommand),
 )
 withGlobalOptions(cli.command('metadata', 'Run configured metadata generator commands')).action(
@@ -52,10 +52,10 @@ function readPackageMetadata(): { name: string; version: string } {
       readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
     ) as Partial<{ name: string; version: string }>
     return {
-      name: json.name || 'vite-kit',
+      name: json.name || 'vite-link',
       version: json.version || '0.0.0',
     }
   } catch {
-    return { name: 'vite-kit', version: '0.0.0' }
+    return { name: 'vite-link', version: '0.0.0' }
   }
 }

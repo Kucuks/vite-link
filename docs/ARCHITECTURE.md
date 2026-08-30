@@ -1,9 +1,9 @@
 # Architecture
 
-Vite Kit is a framework-neutral core with optional runtime adapters.
+Vite Link is a framework-neutral core with optional runtime adapters.
 
 ```txt
-vite-kit core
+vite-link core
   ├─ config and tsconfig resolution
   ├─ Vite/Rolldown SSR build
   ├─ diagnostics pipeline

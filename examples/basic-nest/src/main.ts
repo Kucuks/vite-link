@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { AppModule } from './app.module'
-import { runManagedBootstrap } from 'vite-kit/runtime'
+import { runManagedBootstrap } from 'vite-link/runtime'
 
 export async function createApp() {
   const app = await NestFactory.create(AppModule, new FastifyAdapter())

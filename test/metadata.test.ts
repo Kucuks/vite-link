@@ -1,7 +1,7 @@
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { resolveViteKitConfig } from '../src/config/defaults'
+import { resolveViteLinkConfig } from '../src/config/defaults'
 import { fileExists } from '../src/core/fs'
 import { runDiagnostics } from '../src/diagnostics'
 import { collectMetadataCommands, startMetadataWatcher } from '../src/metadata'
@@ -10,7 +10,7 @@ import { createFixture } from './helpers'
 describe('metadata pipeline', () => {
   it('rejects enabled metadata generation without an explicit command', async () => {
     const root = await createFixture()
-    const config = await resolveViteKitConfig({ root, metadata: { enabled: true } })
+    const config = await resolveViteLinkConfig({ root, metadata: { enabled: true } })
     const diagnostics = await runDiagnostics(config)
 
     expect(diagnostics.some(({ code }) => code === 'METADATA_COMMAND_REQUIRED')).toBe(true)
@@ -18,7 +18,7 @@ describe('metadata pipeline', () => {
 
   it('uses only explicit project-owned commands', async () => {
     const root = await createFixture()
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       metadata: { commands: ['generate-openapi', 'generate-graphql'] },
     })
@@ -34,7 +34,7 @@ describe('metadata pipeline', () => {
       script,
       `import { writeFileSync } from 'node:fs'; writeFileSync(${JSON.stringify(marker)}, 'ran')`,
     )
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       dev: { debounce: 200 },
       metadata: {

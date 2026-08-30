@@ -5,8 +5,8 @@ import { dirname, join, resolve } from 'node:path'
 import { performance } from 'node:perf_hooks'
 import { build as viteBuild } from 'vite'
 import { copyAssets } from '../../src/assets'
-import { defineNestViteKitConfig } from '../../src/adapters/nest'
-import { resolveViteKitConfig } from '../../src/config/defaults'
+import { defineNestViteLinkConfig } from '../../src/adapters/nest'
+import { resolveViteLinkConfig } from '../../src/config/defaults'
 import { createViteInlineConfig } from '../../src/config/vite'
 import { createTsconfigPathResolverPlugin } from '../../src/core/alias'
 import { mapConcurrent } from '../../src/core/concurrency'
@@ -18,7 +18,7 @@ import { measure, measureWithMemory, round, type Samples } from './statistics'
 const SOURCE_FILE_COUNT = 2_000
 const SOURCE_FILE_BYTES = 1_024
 const BUILD_MODULE_COUNT = 500
-const fixtureRoot = await mkdtemp(join(tmpdir(), 'vite-kit-performance-'))
+const fixtureRoot = await mkdtemp(join(tmpdir(), 'vite-link-performance-'))
 const outputPath = readOutputPath()
 
 try {
@@ -207,8 +207,8 @@ function readOutputPath(): string | undefined {
   return readArgument('--output') ?? process.argv.slice(2).find((value) => !value.startsWith('-'))
 }
 
-async function resolveNestConfig(options: Parameters<typeof defineNestViteKitConfig>[0]) {
-  return resolveViteKitConfig(defineNestViteKitConfig(options))
+async function resolveNestConfig(options: Parameters<typeof defineNestViteLinkConfig>[0]) {
+  return resolveViteLinkConfig(defineNestViteLinkConfig(options))
 }
 
 function readGitCommit(): string | undefined {

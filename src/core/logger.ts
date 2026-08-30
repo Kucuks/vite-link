@@ -8,7 +8,7 @@ export interface Logger {
   debug(message: string): void
 }
 
-export function createLogger(scope = 'vite-kit', verbose = false): Logger {
+export function createLogger(scope = 'vite-link', verbose = false): Logger {
   const prefix = pc.dim(`[${scope}]`)
   return {
     info: (message) => console.log(`${prefix} ${message}`),

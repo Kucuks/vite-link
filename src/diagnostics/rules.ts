@@ -1,8 +1,8 @@
-import type { Diagnostic, ResolvedViteKitConfig } from '../types'
+import type { Diagnostic, ResolvedViteLinkConfig } from '../types'
 import { runConfigDiagnostics } from './config-rules'
 import { runSourceDiagnostics } from './source-rules'
 
-export async function runDiagnostics(config: ResolvedViteKitConfig): Promise<Diagnostic[]> {
+export async function runDiagnostics(config: ResolvedViteLinkConfig): Promise<Diagnostic[]> {
   if (!config.diagnostics.enabled) return []
 
   const configResults = await Promise.all([

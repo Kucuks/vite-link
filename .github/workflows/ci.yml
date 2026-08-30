@@ -99,8 +99,8 @@ jobs:
       - run: npm ci
       - run: npm run test:smoke:nest
         env:
-          VITE_KIT_SMOKE_TYPESCRIPT: ${{ matrix.typescript }}
-          VITE_KIT_SMOKE_VITE: ${{ matrix.vite }}
+          VITE_LINK_SMOKE_TYPESCRIPT: ${{ matrix.typescript }}
+          VITE_LINK_SMOKE_VITE: ${{ matrix.vite }}
 
   production-audit:
     name: Production dependency audit

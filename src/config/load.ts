@@ -1,13 +1,13 @@
 import { resolve } from 'node:path'
 import { loadConfigFromFile, mergeConfig, type PluginOption, type UserConfig } from 'vite'
-import type { LoadedViteKitConfig, ViteKitOptions, ViteKitPlugin } from '../types'
+import type { LoadedViteLinkConfig, ViteLinkOptions, ViteLinkPlugin } from '../types'
 
-export async function loadViteKitConfig(options: {
+export async function loadViteLinkConfig(options: {
   root: string | undefined
   configFile: string | undefined
   command: 'serve' | 'build'
   mode: string
-}): Promise<LoadedViteKitConfig> {
+}): Promise<LoadedViteLinkConfig> {
   const root = resolve(options.root ?? process.cwd())
   const loaded = await loadConfigFromFile(
     { command: options.command, mode: options.mode },
@@ -16,25 +16,25 @@ export async function loadViteKitConfig(options: {
   )
 
   const viteConfig = loaded?.config ?? {}
-  const viteKitOptions =
-    findViteKitOptions(viteConfig.plugins) ?? readInlineViteKitOptions(viteConfig) ?? {}
+  const viteLinkOptions =
+    findViteLinkOptions(viteConfig.plugins) ?? readInlineViteLinkOptions(viteConfig) ?? {}
 
   return {
-    viteConfig: stripViteKitPlugins(viteConfig),
-    viteKitOptions: { root, ...viteKitOptions },
+    viteConfig: stripViteLinkPlugins(viteConfig),
+    viteLinkOptions: { root, ...viteLinkOptions },
     configFile: loaded?.path,
   }
 }
 
 export function mergeUserViteConfig(base: UserConfig, user: UserConfig): UserConfig {
-  const { viteKit: _viteKit, ...userWithoutViteKit } = user as UserConfig & {
-    viteKit?: ViteKitOptions
+  const { viteLink: _viteLink, ...userWithoutViteLink } = user as UserConfig & {
+    viteLink?: ViteLinkOptions
   }
-  void _viteKit
-  return mergeConfig(stripViteKitPlugins(userWithoutViteKit), base)
+  void _viteLink
+  return mergeConfig(stripViteLinkPlugins(userWithoutViteLink), base)
 }
 
-export function stripViteKitPlugins(config: UserConfig): UserConfig {
+export function stripViteLinkPlugins(config: UserConfig): UserConfig {
   if (!config.plugins) return config
   return {
     ...config,
@@ -56,7 +56,7 @@ function filterPluginOptions(plugins: PluginOption | PluginOption[]): PluginOpti
 
     if (
       typeof item === 'object' &&
-      ('__viteKit' in item || ('__viteKitManaged' in item && item.__viteKitManaged === true))
+      ('__viteLink' in item || ('__viteLinkManaged' in item && item.__viteLinkManaged === true))
     ) {
       continue
     }
@@ -66,29 +66,29 @@ function filterPluginOptions(plugins: PluginOption | PluginOption[]): PluginOpti
   return output
 }
 
-function findViteKitOptions(
+function findViteLinkOptions(
   plugins: PluginOption | PluginOption[] | undefined,
-): ViteKitOptions | undefined {
+): ViteLinkOptions | undefined {
   if (!plugins) return undefined
   const list = Array.isArray(plugins) ? plugins : [plugins]
 
   for (const item of list) {
     if (!item) continue
     if (Array.isArray(item)) {
-      const nested = findViteKitOptions(item)
+      const nested = findViteLinkOptions(item)
       if (nested) return nested
       continue
     }
 
-    if (typeof item === 'object' && '__viteKit' in item) {
-      return (item as ViteKitPlugin).__viteKit?.options
+    if (typeof item === 'object' && '__viteLink' in item) {
+      return (item as ViteLinkPlugin).__viteLink?.options
     }
   }
 
   return undefined
 }
 
-function readInlineViteKitOptions(config: UserConfig): ViteKitOptions | undefined {
-  const maybe = (config as UserConfig & { viteKit?: ViteKitOptions }).viteKit
+function readInlineViteLinkOptions(config: UserConfig): ViteLinkOptions | undefined {
+  const maybe = (config as UserConfig & { viteLink?: ViteLinkOptions }).viteLink
   return maybe && typeof maybe === 'object' ? maybe : undefined
 }

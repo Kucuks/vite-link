@@ -1,7 +1,7 @@
 import { copyFile, lstat, realpath, rm } from 'node:fs/promises'
 import { dirname, isAbsolute, relative, resolve } from 'node:path'
 import fg from 'fast-glob'
-import type { AssetPattern, ResolvedViteKitConfig } from '../types'
+import type { AssetPattern, ResolvedViteLinkConfig } from '../types'
 import { mapConcurrent } from '../core/concurrency'
 import { ensureDir, fileExists, toPosixPath } from '../core/fs'
 import { isExcludedByGlob, matchesGlobPattern } from '../core/glob'
@@ -12,7 +12,7 @@ export interface AssetCopyResult {
   files: string[]
 }
 
-export async function copyAssets(config: ResolvedViteKitConfig): Promise<AssetCopyResult> {
+export async function copyAssets(config: ResolvedViteLinkConfig): Promise<AssetCopyResult> {
   const tasks: Array<{ source: string; target: string; outDir: string }> = []
   const targetOwners = new Map<string, string>()
 
@@ -52,7 +52,7 @@ export async function copyAssets(config: ResolvedViteKitConfig): Promise<AssetCo
 }
 
 export async function copyChangedAsset(
-  config: ResolvedViteKitConfig,
+  config: ResolvedViteLinkConfig,
   file: string,
 ): Promise<{ copied: boolean; removed: boolean; restart: boolean; target?: string }> {
   const absolute = isAbsolute(file) ? file : resolve(config.root, file)
@@ -81,7 +81,7 @@ export async function copyChangedAsset(
 }
 
 export function findMatchingAssetPattern(
-  config: ResolvedViteKitConfig,
+  config: ResolvedViteLinkConfig,
   file: string,
 ): AssetPattern | undefined {
   const absolute = isAbsolute(file) ? file : resolve(config.root, file)

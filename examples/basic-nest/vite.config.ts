@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import nest from 'vite-kit/nest'
+import nest from 'vite-link/nest'
 
 export default defineConfig({
   plugins: [

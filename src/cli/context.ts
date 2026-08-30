@@ -1,11 +1,11 @@
 import { mergeConfig } from 'vite'
 import {
   createViteInlineConfig,
-  loadViteKitConfig,
+  loadViteLinkConfig,
   mergeUserViteConfig,
-  resolveViteKitConfig,
+  resolveViteLinkConfig,
 } from '../config'
-import type { ResolvedViteKitConfig } from '../types'
+import type { ResolvedViteLinkConfig } from '../types'
 
 export interface CliGlobalOptions {
   root?: string
@@ -18,10 +18,10 @@ export async function createCliContext(
   options: CliGlobalOptions,
   command: 'serve' | 'build',
 ): Promise<{
-  config: ResolvedViteKitConfig
+  config: ResolvedViteLinkConfig
   viteConfig: ReturnType<typeof mergeConfig>
 }> {
-  const loaded = await loadViteKitConfig({
+  const loaded = await loadViteLinkConfig({
     root: options.root,
     configFile: options.config,
     command,
@@ -29,21 +29,21 @@ export async function createCliContext(
   })
 
   const diagnostics =
-    typeof loaded.viteKitOptions.diagnostics === 'object'
-      ? { ...loaded.viteKitOptions.diagnostics }
-      : loaded.viteKitOptions.diagnostics
+    typeof loaded.viteLinkOptions.diagnostics === 'object'
+      ? { ...loaded.viteLinkOptions.diagnostics }
+      : loaded.viteLinkOptions.diagnostics
 
   if (options.strict !== undefined && typeof diagnostics === 'object') {
     diagnostics.strict = options.strict
   }
 
-  const viteKitOptions = { ...loaded.viteKitOptions }
+  const viteLinkOptions = { ...loaded.viteLinkOptions }
   if (diagnostics !== undefined) {
-    viteKitOptions.diagnostics = diagnostics
+    viteLinkOptions.diagnostics = diagnostics
   }
 
-  const config = await resolveViteKitConfig(
-    viteKitOptions,
+  const config = await resolveViteLinkConfig(
+    viteLinkOptions,
     command === 'build' ? 'production' : 'development',
     options.mode ?? (command === 'build' ? 'production' : 'development'),
   )

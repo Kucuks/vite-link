@@ -1,10 +1,10 @@
 import chokidar from 'chokidar'
 import { isAbsolute, relative, resolve } from 'node:path'
-import type { ResolvedViteKitConfig } from '../types'
+import type { ResolvedViteLinkConfig } from '../types'
 import { toPosixPath } from '../core/fs'
 import { runCommand } from '../typecheck/run'
 
-export async function runMetadataGenerators(config: ResolvedViteKitConfig): Promise<void> {
+export async function runMetadataGenerators(config: ResolvedViteLinkConfig): Promise<void> {
   if (!config.metadata.enabled) return
 
   const commands = collectMetadataCommands(config)
@@ -19,7 +19,7 @@ export interface MetadataWatcher {
 }
 
 export function startMetadataWatcher(
-  config: ResolvedViteKitConfig,
+  config: ResolvedViteLinkConfig,
   onError: (error: unknown) => void = console.error,
 ): MetadataWatcher | undefined {
   if (!config.metadata.enabled || !config.metadata.watch) return undefined
@@ -84,7 +84,7 @@ export function startMetadataWatcher(
   }
 }
 
-function isIgnoredMetadataPath(config: ResolvedViteKitConfig, path: string): boolean {
+function isIgnoredMetadataPath(config: ResolvedViteLinkConfig, path: string): boolean {
   const normalized = toPosixPath(path)
   if (normalized.split('/').includes('node_modules')) return true
   if (normalized.endsWith('.spec.ts') || normalized.endsWith('.test.ts')) return true
@@ -94,7 +94,7 @@ function isIgnoredMetadataPath(config: ResolvedViteKitConfig, path: string): boo
   return outputRelative === '' || (!outputRelative.startsWith('..') && !isAbsolute(outputRelative))
 }
 
-export function collectMetadataCommands(config: ResolvedViteKitConfig): string[] {
+export function collectMetadataCommands(config: ResolvedViteLinkConfig): string[] {
   return [...config.metadata.commands]
 }
 

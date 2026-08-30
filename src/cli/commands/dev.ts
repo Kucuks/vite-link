@@ -44,7 +44,7 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
   await copyAssets(config)
   const runner = new ChildRunner(config)
   const restarter = new RestartController(config.dev.debounce, async () => runner.restart())
-  const previousCliCommand = process.env.VITE_KIT_CLI_COMMAND
+  const previousCliCommand = process.env.VITE_LINK_CLI_COMMAND
   let typecheck: ReturnType<typeof startTypecheckWatcher>
   let metadataWatcher: ReturnType<typeof startMetadataWatcher>
   let assetWatcher: ReturnType<typeof watchAssets>
@@ -77,13 +77,13 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
     )
 
     if (cliCommandChanged) {
-      if (previousCliCommand === undefined) delete process.env.VITE_KIT_CLI_COMMAND
-      else process.env.VITE_KIT_CLI_COMMAND = previousCliCommand
+      if (previousCliCommand === undefined) delete process.env.VITE_LINK_CLI_COMMAND
+      else process.env.VITE_LINK_CLI_COMMAND = previousCliCommand
       cliCommandChanged = false
     }
 
     if (cleanupErrors.length > 0) {
-      throw new AggregateError(cleanupErrors, 'Failed to close the Vite Kit development session')
+      throw new AggregateError(cleanupErrors, 'Failed to close the Vite Link development session')
     }
   }
 
@@ -91,7 +91,7 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
     typecheck = startTypecheckWatcher(config)
     metadataWatcher = startMetadataWatcher(config)
     assetWatcher = watchAssets(config, async () => restarter.schedule())
-    process.env.VITE_KIT_CLI_COMMAND = 'dev'
+    process.env.VITE_LINK_CLI_COMMAND = 'dev'
     cliCommandChanged = true
 
     const buildResult = await viteBuild({
@@ -112,7 +112,7 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
     } catch (cleanupError) {
       throw new AggregateError(
         [error, cleanupError],
-        'Failed to start and clean up the Vite Kit development session',
+        'Failed to start and clean up the Vite Link development session',
         { cause: cleanupError },
       )
     }

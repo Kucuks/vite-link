@@ -23,9 +23,9 @@ describe('managed development session', () => {
     await writeFile(
       configPath,
       [
-        `import viteKit from ${JSON.stringify(pluginUrl)}`,
+        `import viteLink from ${JSON.stringify(pluginUrl)}`,
         'export default {',
-        '  plugins: [viteKit({',
+        '  plugins: [viteLink({',
         '    clearScreen: false,',
         '    diagnostics: false,',
         '    typecheck: false,',
@@ -55,10 +55,10 @@ describe('managed development session', () => {
     await writeFile(
       configPath,
       [
-        `import viteKit from ${JSON.stringify(pluginUrl)}`,
+        `import viteLink from ${JSON.stringify(pluginUrl)}`,
         'export default {',
         '  plugins: [',
-        '    viteKit({',
+        '    viteLink({',
         '      clearScreen: false,',
         '      diagnostics: false,',
         '      typecheck: false,',
@@ -67,7 +67,7 @@ describe('managed development session', () => {
         '    {',
         "      name: 'fail-while-broken',",
         '      transform(code, id) {',
-        "        if (id.endsWith('/src/main.ts') && code.includes('VITE_KIT_BROKEN')) {",
+        "        if (id.endsWith('/src/main.ts') && code.includes('VITE_LINK_BROKEN')) {",
         "          throw new Error('intentional initial build failure')",
         '        }',
         '      },',
@@ -76,7 +76,7 @@ describe('managed development session', () => {
         '}',
       ].join('\n'),
     )
-    await writeFile(join(root, 'src/main.ts'), "export const state = 'VITE_KIT_BROKEN'")
+    await writeFile(join(root, 'src/main.ts'), "export const state = 'VITE_LINK_BROKEN'")
 
     try {
       session = await startDevSession({ root, config: configPath })

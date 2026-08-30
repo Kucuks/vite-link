@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { build } from 'vite'
-import { resolveViteKitConfig } from '../src/config/defaults'
+import { resolveViteLinkConfig } from '../src/config/defaults'
 import { createViteInlineConfig } from '../src/config/vite'
 import { createFixture } from './helpers'
 
@@ -26,7 +26,7 @@ describe('dependency externalization', () => {
         'console.log(externalValue, bundledValue)',
       ].join('\n'),
     )
-    const config = await resolveViteKitConfig({
+    const config = await resolveViteLinkConfig({
       root,
       diagnostics: false,
       typecheck: false,

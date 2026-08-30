@@ -1,25 +1,25 @@
 import type { Plugin } from 'vite'
 import { copyAssets } from './assets'
 import { clearConsole } from './core/console'
-import { resolveViteKitConfig } from './config/defaults'
+import { resolveViteLinkConfig } from './config/defaults'
 import { createViteInlineConfig } from './config/vite'
 import { reportDiagnostics, runDiagnostics, shouldFailDiagnostics } from './diagnostics'
 import type {
-  ViteKitManagedPlugin,
-  ViteKitOptions,
-  ViteKitPlugin,
-  ViteKitPluginOption,
+  ViteLinkManagedPlugin,
+  ViteLinkOptions,
+  ViteLinkPlugin,
+  ViteLinkPluginOption,
 } from './types'
 
-export function viteKit(options: ViteKitOptions = {}): ViteKitPluginOption {
-  let resolvedConfig: ReturnType<typeof resolveViteKitConfig> | undefined
-  const plugin: ViteKitPlugin = {
-    name: 'vite-kit',
+export function viteLink(options: ViteLinkOptions = {}): ViteLinkPluginOption {
+  let resolvedConfig: ReturnType<typeof resolveViteLinkConfig> | undefined
+  const plugin: ViteLinkPlugin = {
+    name: 'vite-link',
     enforce: 'pre',
-    __viteKit: { options },
+    __viteLink: { options },
 
     async config(_, env) {
-      resolvedConfig = resolveViteKitConfig(
+      resolvedConfig = resolveViteLinkConfig(
         options,
         env.command === 'build' ? 'production' : 'development',
         env.mode,
@@ -30,9 +30,9 @@ export function viteKit(options: ViteKitOptions = {}): ViteKitPluginOption {
     },
 
     async buildStart() {
-      if (process.env.VITE_KIT_CLI_COMMAND === 'dev') return
+      if (process.env.VITE_LINK_CLI_COMMAND === 'dev') return
 
-      const resolved = await (resolvedConfig ??= resolveViteKitConfig(options, 'production'))
+      const resolved = await (resolvedConfig ??= resolveViteLinkConfig(options, 'production'))
       if (!resolved.diagnostics.enabled) return
 
       const diagnostics = await runDiagnostics(resolved)
@@ -44,19 +44,19 @@ export function viteKit(options: ViteKitOptions = {}): ViteKitPluginOption {
           failOn: resolved.diagnostics.failOn,
         })
       ) {
-        throw new Error('vite-kit diagnostics failed')
+        throw new Error('vite-link diagnostics failed')
       }
     },
 
     async closeBundle() {
-      const resolved = await (resolvedConfig ??= resolveViteKitConfig(options, 'production'))
+      const resolved = await (resolvedConfig ??= resolveViteLinkConfig(options, 'production'))
       if (resolved.assets.length > 0) await copyAssets(resolved)
     },
 
     configureServer(server) {
       server.watcher.on('change', (file) => {
         if (file.endsWith('.ts')) return
-        server.config.logger.info(`[vite-kit] asset/source changed: ${file}`)
+        server.config.logger.info(`[vite-link] asset/source changed: ${file}`)
       })
     },
   }
@@ -67,17 +67,17 @@ export function viteKit(options: ViteKitOptions = {}): ViteKitPluginOption {
   return [plugin, ...adapterPlugins]
 }
 
-export default viteKit
-export type { ViteKitOptions }
+export default viteLink
+export type { ViteLinkOptions }
 
-export function defineViteKitConfig(options: ViteKitOptions): ViteKitOptions {
+export function defineViteLinkConfig(options: ViteLinkOptions): ViteLinkOptions {
   return options
 }
 
-export function isViteKitPlugin(plugin: Plugin): plugin is ViteKitPlugin {
-  return Boolean((plugin as ViteKitPlugin).__viteKit)
+export function isViteLinkPlugin(plugin: Plugin): plugin is ViteLinkPlugin {
+  return Boolean((plugin as ViteLinkPlugin).__viteLink)
 }
 
-function markManagedPlugin(plugin: Plugin): ViteKitManagedPlugin {
-  return Object.assign(plugin, { __viteKitManaged: true as const })
+function markManagedPlugin(plugin: Plugin): ViteLinkManagedPlugin {
+  return Object.assign(plugin, { __viteLinkManaged: true as const })
 }

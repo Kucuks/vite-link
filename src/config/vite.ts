@@ -2,11 +2,11 @@ import { resolve } from 'node:path'
 import type { UserConfig } from 'vite'
 import { createTsconfigPathResolverPlugin } from '../core/alias'
 import { matchesPattern } from '../core/match'
-import type { ResolvedViteKitConfig } from '../types'
+import type { ResolvedViteLinkConfig } from '../types'
 import { looksLikeSecretName } from '../core/env-policy'
 
 export function createViteInlineConfig(
-  config: ResolvedViteKitConfig,
+  config: ResolvedViteLinkConfig,
   options: { includeAdapterPlugins?: boolean } = {},
 ): UserConfig {
   const format: 'es' | 'cjs' = config.build.format === 'esm' ? 'es' : 'cjs'
@@ -65,7 +65,7 @@ export function createViteInlineConfig(
   }
 }
 
-export function createExternalPredicate(config: ResolvedViteKitConfig) {
+export function createExternalPredicate(config: ResolvedViteLinkConfig) {
   return (id: string): boolean => {
     if (id.startsWith('.') || id.startsWith('/') || id.startsWith('\0')) return false
     if (matchesPattern(id, config.external.exclude)) return false
@@ -76,7 +76,7 @@ export function createExternalPredicate(config: ResolvedViteKitConfig) {
   }
 }
 
-function createEnvDefine(config: ResolvedViteKitConfig): Record<string, string> {
+function createEnvDefine(config: ResolvedViteLinkConfig): Record<string, string> {
   const define: Record<string, string> = {}
 
   if (config.env.keepRuntime) {

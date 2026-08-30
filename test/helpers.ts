@@ -1,12 +1,12 @@
 import { mkdtemp, writeFile, mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { defineNestViteKitConfig } from '../src/adapters/nest'
-import { resolveViteKitConfig } from '../src/config/defaults'
-import type { ViteKitOptions } from '../src/types'
+import { defineNestViteLinkConfig } from '../src/adapters/nest'
+import { resolveViteLinkConfig } from '../src/config/defaults'
+import type { ViteLinkOptions } from '../src/types'
 
 export async function createFixture(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'vite-kit-'))
+  const root = await mkdtemp(join(tmpdir(), 'vite-link-'))
   await mkdir(join(root, 'src'), { recursive: true })
   await writeFile(
     join(root, 'package.json'),
@@ -50,8 +50,8 @@ export async function createFixture(): Promise<string> {
 }
 
 export async function resolveNestTestConfig(
-  options: ViteKitOptions = {},
+  options: ViteLinkOptions = {},
   mode: 'development' | 'production' | 'diagnostics' = 'development',
 ) {
-  return resolveViteKitConfig(defineNestViteKitConfig(options), mode)
+  return resolveViteLinkConfig(defineNestViteLinkConfig(options), mode)
 }

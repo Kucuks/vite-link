@@ -2,9 +2,9 @@ import fg from 'fast-glob'
 import ts from 'typescript'
 import { mapConcurrent } from '../core/concurrency'
 import { readText } from '../core/fs'
-import type { Diagnostic, ResolvedViteKitConfig, SourceDiagnosticContext } from '../types'
+import type { Diagnostic, ResolvedViteLinkConfig, SourceDiagnosticContext } from '../types'
 
-export async function runSourceDiagnostics(config: ResolvedViteKitConfig): Promise<Diagnostic[]> {
+export async function runSourceDiagnostics(config: ResolvedViteLinkConfig): Promise<Diagnostic[]> {
   const files = await fg(['**/*.ts'], {
     cwd: config.sourceRoot,
     absolute: true,
@@ -23,7 +23,7 @@ export async function runSourceDiagnostics(config: ResolvedViteKitConfig): Promi
 }
 
 async function createSourceDiagnosticContext(
-  config: ResolvedViteKitConfig,
+  config: ResolvedViteLinkConfig,
   file: string,
 ): Promise<SourceDiagnosticContext> {
   const text = await readText(file)

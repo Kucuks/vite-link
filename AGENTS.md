@@ -1,14 +1,14 @@
-# Vite Kit agent guide
+# Vite Link agent guide
 
 This file applies to the whole repository. Keep changes small, testable, and aligned with the public package contract.
 
 ## Product contract
 
-- The product and CLI are named **Vite Kit** and `vite-kit`.
-- The public npm package is `vite-kit`.
+- The product and CLI are named **Vite Link** and `vite-link`.
+- The public npm package is `vite-link`.
 - The core is framework-neutral. Framework behavior belongs in `src/adapters`.
-- Nest is the first bundled adapter, exposed as `vite-kit/nest`; it is not a core dependency.
-- Supported public entry points are `vite-kit`, `vite-kit/plugin`, `vite-kit/nest`, and `vite-kit/runtime`.
+- Nest is the first bundled adapter, exposed as `vite-link/nest`; it is not a core dependency.
+- Supported public entry points are `vite-link`, `vite-link/plugin`, `vite-link/nest`, and `vite-link/runtime`.
 - Development uses a build-and-restart process boundary. Do not introduce provider-level hot swapping as an implicit behavior.
 
 ## Repository map

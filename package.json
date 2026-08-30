@@ -39,7 +39,7 @@
   },
   "sideEffects": false,
   "bin": {
-    "vite-kit": "./dist/cli/bin.js"
+    "vite-kit": "dist/cli/bin.js"
   },
   "exports": {
     ".": {

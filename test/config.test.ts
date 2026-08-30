@@ -126,4 +126,12 @@ describe('config resolution', () => {
     const context = await createCliContext({ root }, 'build')
     expect(context.viteConfig.configFile).toBe(false)
   })
+
+  it('passes the resolved CLI mode to programmatic Vite builds', async () => {
+    const root = await createFixture()
+    const context = await createCliContext({ root, mode: 'staging' }, 'serve')
+
+    expect(context.config.mode).toBe('staging')
+    expect(context.viteConfig.mode).toBe('staging')
+  })
 })

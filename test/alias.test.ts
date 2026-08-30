@@ -13,6 +13,7 @@ describe('module canonicalizer', () => {
     await writeFile(join(root, 'src/handler/index.ts'), 'export class Handler {}')
     await writeFile(join(root, 'src/util.ts'), 'export const util = true')
     await writeFile(join(root, 'src/worker.mts'), 'export const worker = true')
+    await writeFile(join(root, 'src/redis.service.ts'), 'export class RedisService {}')
     await writeFile(
       join(root, 'tsconfig.build.json'),
       JSON.stringify(
@@ -43,6 +44,7 @@ describe('module canonicalizer', () => {
     const expected = toPosixPath(await realpath(join(root, 'src/handler/index.ts')))
     const expectedJsCounterpart = toPosixPath(await realpath(join(root, 'src/util.ts')))
     const expectedMjsCounterpart = toPosixPath(await realpath(join(root, 'src/worker.mts')))
+    const expectedDottedBasename = toPosixPath(await realpath(join(root, 'src/redis.service.ts')))
 
     expect(resolveId.call(context, 'src/handler', importer, options)).toBe(expected)
     expect(resolveId.call(context, '../../../handler', importer, options)).toBe(expected)
@@ -52,6 +54,12 @@ describe('module canonicalizer', () => {
     )
     expect(resolveId.call(context, '../../../worker.mjs', importer, options)).toBe(
       expectedMjsCounterpart,
+    )
+    expect(resolveId.call(context, 'src/redis.service', importer, options)).toBe(
+      expectedDottedBasename,
+    )
+    expect(resolveId.call(context, '../../../redis.service', importer, options)).toBe(
+      expectedDottedBasename,
     )
     expect(resolveId.call(context, '@nestjs/core', importer, options)).toBeNull()
   })

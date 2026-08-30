@@ -45,11 +45,13 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
   const runner = new ChildRunner(config)
   const restarter = new RestartController(config.dev.debounce, async () => runner.restart())
   const previousCliCommand = process.env.VITE_LINK_CLI_COMMAND
+  const previousNodeEnv = process.env.NODE_ENV
   let typecheck: ReturnType<typeof startTypecheckWatcher>
   let metadataWatcher: ReturnType<typeof startMetadataWatcher>
   let assetWatcher: ReturnType<typeof watchAssets>
   let watcher: ViteWatcher | undefined
   let cliCommandChanged = false
+  let nodeEnvChanged = false
   let closed = false
 
   const close = async () => {
@@ -82,6 +84,12 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
       cliCommandChanged = false
     }
 
+    if (nodeEnvChanged) {
+      if (previousNodeEnv === undefined) delete process.env.NODE_ENV
+      else process.env.NODE_ENV = previousNodeEnv
+      nodeEnvChanged = false
+    }
+
     if (cleanupErrors.length > 0) {
       throw new AggregateError(cleanupErrors, 'Failed to close the Vite Link development session')
     }
@@ -93,6 +101,8 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
     assetWatcher = watchAssets(config, async () => restarter.schedule())
     process.env.VITE_LINK_CLI_COMMAND = 'dev'
     cliCommandChanged = true
+    process.env.NODE_ENV = resolveDevNodeEnv(config.dev.env.NODE_ENV, previousNodeEnv)
+    nodeEnvChanged = true
 
     const buildResult = await viteBuild({
       ...viteConfig,
@@ -158,4 +168,10 @@ interface ViteWatcher {
 
 function isRolldownWatcher(value: unknown): value is ViteWatcher {
   return value !== null && typeof value === 'object' && 'on' in value && 'close' in value
+}
+
+function resolveDevNodeEnv(configured: string | undefined, inherited: string | undefined): string {
+  if (configured) return configured
+  if (inherited && inherited !== 'production') return inherited
+  return 'development'
 }

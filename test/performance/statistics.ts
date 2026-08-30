@@ -64,18 +64,23 @@ export async function measureWithMemory(
   }
 }
 
-function summarize(values: number[], repetitions: number): Samples {
-  values.sort((a, b) => a - b)
-  const mean = values.reduce((sum, value) => sum + value, 0) / values.length
-  const variance = values.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / values.length
+export function summarize(
+  values: number[],
+  repetitions: number = values.length,
+  warmupRepetitions = 1,
+): Samples {
+  const sortedValues = [...values].sort((a, b) => a - b)
+  const mean = sortedValues.reduce((sum, value) => sum + value, 0) / sortedValues.length
+  const variance =
+    sortedValues.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / sortedValues.length
   const standardDeviation = Math.sqrt(variance)
   return {
     repetitions,
-    warmupRepetitions: 1,
-    minMs: round(values[0] ?? 0),
-    p50Ms: round(percentile(values, 0.5)),
-    p95Ms: round(percentile(values, 0.95)),
-    maxMs: round(values.at(-1) ?? 0),
+    warmupRepetitions,
+    minMs: round(sortedValues[0] ?? 0),
+    p50Ms: round(percentile(sortedValues, 0.5)),
+    p95Ms: round(percentile(sortedValues, 0.95)),
+    maxMs: round(sortedValues.at(-1) ?? 0),
     meanMs: round(mean),
     standardDeviationMs: round(standardDeviation),
     coefficientOfVariation: round(mean === 0 ? 0 : standardDeviation / mean),

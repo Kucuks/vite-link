@@ -121,7 +121,7 @@ function createModuleCandidates(target: string): string[] {
   const tsCounterpart = jsToTsExtension(ext)
   if (tsCounterpart) candidates.add(target.slice(0, -ext.length) + tsCounterpart)
 
-  if (!ext) {
+  if (!MODULE_EXTENSIONS.includes(ext)) {
     for (const candidateExt of MODULE_EXTENSIONS) {
       candidates.add(`${target}${candidateExt}`)
     }

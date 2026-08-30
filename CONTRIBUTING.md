@@ -31,9 +31,10 @@ Changes that affect concurrency, watchers, process shutdown, package boundaries,
 
 ```bash
 npm run perf:product -- performance-local.json
+npm run perf:compare:nest -- --output performance-nest-comparison.json
 ```
 
-The benchmark is a regression signal for the development tool, not an application throughput claim.
+The product benchmark is a regression signal for Vite Link internals. The Nest comparison uses the same generated application for both build paths; its HTTP sample is a runtime-parity check, not an application-throughput claim.
 
 ## Pull requests
 

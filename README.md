@@ -62,7 +62,7 @@ Use Vite Link when a Node backend needs a repeatable build-and-restart boundary.
 | TypeScript | `>=5.6.0 <7`              | Packed consumers cover `5.6.3`, `5.7.3`, `5.8.3`, `5.9.3`, and `6.0.3` |
 | Modules    | CommonJS and ESM          | Both package entry points and built application output are verified    |
 
-The `0.1.0` release build is pinned to Vite `8.2.2` and TypeScript `6.0.3`. TypeScript 7 is not supported yet because [its 7.0 release does not ship a programmatic compiler API](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/), which adapter transforms and source diagnostics require.
+The `0.1.x` release line is pinned to Vite `8.2.2` and TypeScript `6.0.3`. TypeScript 7 is not supported yet because [its 7.0 release does not ship a programmatic compiler API](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/), which adapter transforms and source diagnostics require.
 
 ## Quick start
 
@@ -313,6 +313,30 @@ Use `vite build` when plugin transforms and asset copying are enough. Use `vite-
 - Packed-package smoke tests exercise real Nest builds, both package module formats, process startup, and HTTP responses.
 
 These guarantees describe Vite Link as a development and build tool. Runtime capacity, traffic handling, deployment topology, and production availability remain properties of the application and its platform.
+
+### Vite Link and vanilla Nest comparison
+
+The repository includes a reproducible comparison that builds and runs matched generated Nest workloads through Vite Link and the vanilla Nest CLI. The application behavior and generated feature modules are equivalent; only the tool-specific bootstrap and configuration differ:
+
+```bash
+npm run perf:compare:nest -- --output performance-nest-comparison.json
+```
+
+Reference snapshot from the same 100-module fixture on Windows x64 with Node 22.16.0:
+
+| Metric                                    |   Vite Link | Vanilla Nest | Result                  |
+| ----------------------------------------- | ----------: | -----------: | ----------------------- |
+| Clean production build p50                |      2.40 s |       3.11 s | 22.7% faster            |
+| Production start to `/health` p50         |      596 ms |       642 ms | 7.2% faster             |
+| Dev cold start to `/health` p50           |      1.62 s |       3.37 s | 51.9% faster            |
+| Dev reload: edit to revised `/health` p50 |      896 ms |       1.36 s | 34.0% faster            |
+| HTTP throughput mean                      | 47.8k req/s |  47.2k req/s | Parity (within ±5%)     |
+| Emitted output                            |     282 KiB |      307 KiB | 8.1% smaller            |
+| Emitted files                             |           2 |          206 | One bundle + source map |
+
+The report compares clean production-build duration, production and development readiness, source-edit-to-revised-health reload time, emitted output size, and an informational Autocannon HTTP parity sample. In practical terms, the edit metric represents Vite Link's hot-reload experience. Its implementation is managed build-and-restart rather than provider-level, state-preserving HMR: the measurement includes rebuild, graceful process replacement, and readiness, compared with vanilla Nest watch mode. Build measurements include each tool's normal production pipeline: Vite Link performs its configured diagnostics and type check before bundling, while the Nest CLI performs its default TypeScript compilation. Development readiness reflects each documented workflow: Vite Link reports application readiness while its configured asynchronous type check continues, whereas Nest watch completes compiler checking before readiness. It therefore compares developer-perceived readiness, not equal type-check latency. The generated report records exact package versions, workload size, runtime, operating system, hardware, repetitions, percentiles, variability, per-round HTTP values, request count, and failures. A comparison whose coefficient of variation exceeds `0.10` is marked inconclusive instead of naming a winner. Stable HTTP-throughput differences within `±5%` are reported as runtime parity.
+
+Treat results as environment-specific evidence. Build and startup measurements characterize the toolchains. The HTTP sample checks that the generated runtime remains comparable; it is not a Vite Link throughput or scalability claim.
 
 ## Contributing, security, and license
 

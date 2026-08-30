@@ -128,9 +128,12 @@ jobs:
           package-manager-cache: false
       - run: npm ci
       - run: npm run perf:product -- performance-ci.json
+      - run: npm run perf:compare:nest -- performance-nest-comparison-ci.json
       - uses: actions/upload-artifact@v7
         with:
           name: performance-${{ github.sha }}
-          path: performance-ci.json
+          path: |
+            performance-ci.json
+            performance-nest-comparison-ci.json
           if-no-files-found: error
           retention-days: 30

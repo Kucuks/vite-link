@@ -52,6 +52,7 @@ export async function createCliContext(
   const viteConfig = {
     ...mergeUserViteConfig(inline, loaded.viteConfig),
     configFile: false as const,
+    mode: config.mode,
   }
 
   return { config, viteConfig }

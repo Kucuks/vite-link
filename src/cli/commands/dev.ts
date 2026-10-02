@@ -1,5 +1,6 @@
+import { resolve } from 'node:path'
 import { build as viteBuild } from 'vite'
-import { copyAssets, watchAssets } from '../../assets'
+import { collectEmittedOutputPaths, copyAssets, watchAssets } from '../../assets'
 import { clearConsole } from '../../core/console'
 import { reportDiagnostics, runDiagnostics, shouldFailDiagnostics } from '../../diagnostics'
 import { startMetadataWatcher } from '../../metadata'
@@ -13,7 +14,10 @@ export async function devCommand(options: CliGlobalOptions): Promise<void> {
 }
 
 export interface DevSession {
+  /** Resolves after the first successful build has spawned the application process. */
   ready: Promise<void>
+  /** Resolves when the first application reports successful startup via runManagedBootstrap. */
+  applicationReady: Promise<void>
   close(): Promise<void>
 }
 
@@ -26,7 +30,7 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
     throw new Error(`Unsupported dev strategy: ${config.dev.strategy}`)
   }
 
-  const diagnostics = await runDiagnostics(config)
+  const diagnostics = await runDiagnostics(config, viteConfig)
   reportDiagnostics(diagnostics)
   if (
     shouldFailDiagnostics(diagnostics, {
@@ -41,7 +45,10 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
     await runTypecheck(config)
   }
 
-  await copyAssets(config)
+  const protectedOutputs = new Set([
+    resolve(config.root, config.build.outDir, config.build.entryFileName),
+  ])
+  await copyAssets(config, protectedOutputs)
   const runner = new ChildRunner(config)
   const restarter = new RestartController(config.dev.debounce, async () => runner.restart())
   const previousCliCommand = process.env.VITE_LINK_CLI_COMMAND
@@ -53,52 +60,68 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
   let cliCommandChanged = false
   let nodeEnvChanged = false
   let closed = false
+  let closing: Promise<void> | undefined
+  let settleReady: ((error?: Error) => void) | undefined
+  let settleApplicationReady: ((error?: Error) => void) | undefined
 
-  const close = async () => {
-    if (closed) return
+  const close = (): Promise<void> => {
+    if (closing) return closing
     closed = true
-    restarter.close()
+    const closeError = new Error('The Vite Link development session closed before startup')
+    settleReady?.(closeError)
+    settleApplicationReady?.(closeError)
+    const restarterClose = restarter.close()
+    const runnerClose = runner.close()
 
-    const cleanupErrors: unknown[] = []
-    try {
-      typecheck?.kill('SIGTERM')
-    } catch (error) {
-      cleanupErrors.push(error)
-    }
+    closing = (async () => {
+      const cleanupErrors: unknown[] = []
+      try {
+        typecheck?.kill('SIGTERM')
+      } catch (error) {
+        cleanupErrors.push(error)
+      }
 
-    const results = await Promise.allSettled([
-      metadataWatcher?.close(),
-      assetWatcher?.close(),
-      watcher?.close(),
-      runner.stop(),
-    ])
-    cleanupErrors.push(
-      ...results
-        .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
-        .map((result) => result.reason),
-    )
+      const results = await Promise.allSettled([
+        metadataWatcher?.close(),
+        assetWatcher?.close(),
+        watcher?.close(),
+        restarterClose,
+        runnerClose,
+      ])
+      cleanupErrors.push(
+        ...results
+          .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+          .map((result) => result.reason),
+      )
 
-    if (cliCommandChanged) {
-      if (previousCliCommand === undefined) delete process.env.VITE_LINK_CLI_COMMAND
-      else process.env.VITE_LINK_CLI_COMMAND = previousCliCommand
-      cliCommandChanged = false
-    }
+      if (cliCommandChanged) {
+        if (previousCliCommand === undefined) delete process.env.VITE_LINK_CLI_COMMAND
+        else process.env.VITE_LINK_CLI_COMMAND = previousCliCommand
+        cliCommandChanged = false
+      }
 
-    if (nodeEnvChanged) {
-      if (previousNodeEnv === undefined) delete process.env.NODE_ENV
-      else process.env.NODE_ENV = previousNodeEnv
-      nodeEnvChanged = false
-    }
+      if (nodeEnvChanged) {
+        if (previousNodeEnv === undefined) delete process.env.NODE_ENV
+        else process.env.NODE_ENV = previousNodeEnv
+        nodeEnvChanged = false
+      }
 
-    if (cleanupErrors.length > 0) {
-      throw new AggregateError(cleanupErrors, 'Failed to close the Vite Link development session')
-    }
+      if (cleanupErrors.length > 0) {
+        throw new AggregateError(cleanupErrors, 'Failed to close the Vite Link development session')
+      }
+    })()
+    return closing
   }
 
   try {
     typecheck = startTypecheckWatcher(config)
     metadataWatcher = startMetadataWatcher(config)
-    assetWatcher = watchAssets(config, async () => restarter.schedule())
+    assetWatcher = watchAssets(
+      config,
+      async () => restarter.schedule(),
+      undefined,
+      protectedOutputs,
+    )
     process.env.VITE_LINK_CLI_COMMAND = 'dev'
     cliCommandChanged = true
     process.env.NODE_ENV = resolveDevNodeEnv(config.dev.env.NODE_ENV, previousNodeEnv)
@@ -106,6 +129,18 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
 
     const buildResult = await viteBuild({
       ...viteConfig,
+      plugins: [
+        ...(viteConfig.plugins ?? []),
+        {
+          name: 'vite-link-protect-dev-outputs',
+          generateBundle(_options, bundle) {
+            const emitted = collectEmittedOutputPaths(config, { output: Object.values(bundle) })
+            for (const output of emitted) {
+              protectedOutputs.add(output)
+            }
+          },
+        },
+      ],
       build: {
         ...viteConfig.build,
         watch: {},
@@ -131,9 +166,34 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
 
   let firstBuild = true
   let resolveReady!: () => void
-  const ready = new Promise<void>((resolvePromise) => {
+  let rejectReady!: (error: Error) => void
+  const ready = new Promise<void>((resolvePromise, rejectPromise) => {
     resolveReady = resolvePromise
+    rejectReady = rejectPromise
   })
+  let readySettled = false
+  settleReady = (error?: Error) => {
+    if (readySettled) return
+    readySettled = true
+    if (error) rejectReady(error)
+    else resolveReady()
+  }
+  void ready.catch(() => {})
+
+  let resolveApplicationReady!: () => void
+  let rejectApplicationReady!: (error: Error) => void
+  const applicationReady = new Promise<void>((resolvePromise, rejectPromise) => {
+    resolveApplicationReady = resolvePromise
+    rejectApplicationReady = rejectPromise
+  })
+  let applicationReadySettled = false
+  settleApplicationReady = (error?: Error) => {
+    if (applicationReadySettled) return
+    applicationReadySettled = true
+    if (error) rejectApplicationReady(error)
+    else resolveApplicationReady()
+  }
+  void applicationReady.catch(() => {})
 
   watcher.on('event', (event) => {
     if (closed) return
@@ -147,8 +207,20 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
 
       if (firstBuild) {
         firstBuild = false
-        runner.start()
-        resolveReady()
+        try {
+          runner.start()
+          settleReady?.()
+          void runner.applicationReady.then(
+            () => settleApplicationReady?.(),
+            (error: unknown) =>
+              settleApplicationReady?.(error instanceof Error ? error : new Error(String(error))),
+          )
+        } catch (error) {
+          const startupError = error instanceof Error ? error : new Error(String(error))
+          settleReady?.(startupError)
+          settleApplicationReady?.(startupError)
+          console.error(startupError)
+        }
       } else {
         restarter.schedule()
       }
@@ -157,6 +229,7 @@ export async function startDevSession(options: CliGlobalOptions): Promise<DevSes
 
   return {
     ready,
+    applicationReady,
     close,
   }
 }

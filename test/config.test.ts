@@ -1,4 +1,4 @@
-import { mkdtemp, symlink } from 'node:fs/promises'
+import { mkdir, mkdtemp, symlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -42,6 +42,82 @@ describe('config resolution', () => {
     await expect(resolveViteLinkConfig({ root, build: { outDir: 'linked-dist' } })).rejects.toThrow(
       /build\.outDir.*inside the project root/,
     )
+  })
+
+  it('infers the project source directory for a nested entry on Windows', async () => {
+    const root = await createFixture()
+    const config = await resolveViteLinkConfig({ root, entry: join('src', 'server', 'main.ts') })
+
+    expect(config.sourceRoot).toBe(join(root, 'src'))
+  })
+
+  it('infers a nested source directory for a main entry on Windows and POSIX', async () => {
+    const root = await createFixture()
+    const sourceRoot = join(root, 'apps', 'api', 'src')
+    await mkdir(sourceRoot, { recursive: true })
+
+    const config = await resolveViteLinkConfig({
+      root,
+      entry: join('apps', 'api', 'src', 'main.ts'),
+    })
+
+    expect(config.sourceRoot).toBe(sourceRoot)
+  })
+
+  it('does not infer source directories from the project root path', async () => {
+    const fixtureRoot = await createFixture()
+    const root = join(fixtureRoot, 'src', 'my-api')
+    await mkdir(root, { recursive: true })
+
+    const config = await resolveViteLinkConfig({
+      root,
+      entry: 'main.ts',
+      tsconfig: join(fixtureRoot, 'tsconfig.build.json'),
+    })
+
+    expect(config.sourceRoot).toBe(root)
+  })
+
+  it('rejects source roots outside the project, including through symlinks', async () => {
+    const root = await createFixture()
+    const outside = await mkdtemp(join(tmpdir(), 'vite-link-source-'))
+    await symlink(
+      outside,
+      join(root, 'linked-source'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    )
+
+    await expect(resolveViteLinkConfig({ root, sourceRoot: outside })).rejects.toThrow(
+      /sourceRoot.*inside the project root/,
+    )
+    await expect(resolveViteLinkConfig({ root, sourceRoot: 'linked-source' })).rejects.toThrow(
+      /sourceRoot.*inside the project root/,
+    )
+  })
+
+  it('rejects drive-relative output names on every platform', async () => {
+    const root = await createFixture()
+
+    await expect(
+      resolveViteLinkConfig({ root, build: { entryFileName: 'C:escape.cjs' } }),
+    ).rejects.toThrow(/build\.entryFileName.*relative path inside/)
+    await expect(
+      resolveViteLinkConfig({ root, build: { chunkFileNames: 'C:escape.cjs' } }),
+    ).rejects.toThrow(/build\.chunkFileNames.*relative path inside/)
+  })
+
+  it('rejects output names that escape the build directory through a symlink', async () => {
+    const root = await createFixture()
+    await mkdir(join(root, 'dist'))
+    await symlink(
+      join(root, 'src'),
+      join(root, 'dist', 'linked-source'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    )
+
+    await expect(
+      resolveViteLinkConfig({ root, build: { entryFileName: 'linked-source/main.cjs' } }),
+    ).rejects.toThrow(/build\.entryFileName.*inside the build output directory/)
   })
 
   it('keeps the generic core free of Nest transforms and defaults', async () => {

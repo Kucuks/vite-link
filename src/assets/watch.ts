@@ -3,7 +3,7 @@ import { dirname, isAbsolute, relative, resolve } from 'node:path'
 import type { ResolvedViteLinkConfig } from '../types'
 import { TaskQueue } from '../core/concurrency'
 import { toPosixPath } from '../core/fs'
-import { copyChangedAsset } from './copy'
+import { collectEmittedOutputPaths, copyChangedAsset } from './copy'
 
 export interface AssetWatcher {
   ready: Promise<void>
@@ -14,6 +14,7 @@ export function watchAssets(
   config: ResolvedViteLinkConfig,
   onRestartRequired: (file: string) => void | Promise<void>,
   onError: (error: unknown) => void = console.error,
+  protectedOutputs: ReadonlySet<string> = collectEmittedOutputPaths(config),
 ): AssetWatcher | undefined {
   if (config.assets.length === 0) return undefined
 
@@ -34,7 +35,7 @@ export function watchAssets(
       .catch(() => {})
       .then(() =>
         queue.add(async () => {
-          const result = await copyChangedAsset(config, absolute)
+          const result = await copyChangedAsset(config, absolute, protectedOutputs)
           if (result.restart) await onRestartRequired(absolute)
         }),
       )

@@ -1,5 +1,5 @@
 import { build as viteBuild } from 'vite'
-import { copyAssets } from '../../assets'
+import { collectEmittedOutputPaths, copyAssets } from '../../assets'
 import { reportDiagnostics, runDiagnostics, shouldFailDiagnostics } from '../../diagnostics'
 import { runMetadataGenerators } from '../../metadata'
 import { runTypecheck } from '../../typecheck'
@@ -11,7 +11,7 @@ export async function buildCommand(options: CliGlobalOptions): Promise<void> {
   const { config, viteConfig } = await createCliContext(options, 'build')
 
   clearConsole(config.clearScreen)
-  const diagnostics = await runDiagnostics(config)
+  const diagnostics = await runDiagnostics(config, viteConfig)
   reportDiagnostics(diagnostics)
   if (
     shouldFailDiagnostics(diagnostics, {
@@ -26,8 +26,8 @@ export async function buildCommand(options: CliGlobalOptions): Promise<void> {
     await runTypecheck(config)
   }
 
-  await viteBuild(viteConfig)
+  const buildResult = await viteBuild(viteConfig)
   await validateBuildOutput(config)
   await runMetadataGenerators(config)
-  await copyAssets(config)
+  await copyAssets(config, collectEmittedOutputPaths(config, buildResult))
 }

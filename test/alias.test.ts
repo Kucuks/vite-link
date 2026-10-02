@@ -1,6 +1,11 @@
-import { mkdir, realpath, writeFile } from 'node:fs/promises'
+import { realpathSync } from 'node:fs'
+import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { build, type Plugin } from 'vite'
 import { describe, expect, it } from 'vitest'
+import { resolveViteLinkConfig } from '../src/config/defaults'
+import { createViteInlineConfig } from '../src/config/vite'
 import { createTsconfigPathResolverPlugin } from '../src/core/alias'
 import { toPosixPath } from '../src/core/fs'
 import { readTsconfig } from '../src/core/tsconfig'
@@ -82,5 +87,64 @@ describe('module canonicalizer', () => {
     expect(resolveId.call(context, './created-later', importer, options)).toBe(
       toPosixPath(await realpath(created)),
     )
+  })
+
+  it('keeps alias and relative imports of one physical source as one build module', async () => {
+    const root = await createFixture()
+    const source = join(root, 'src/core/database/lafops/lafops-tenant-repository.ts')
+    await mkdir(join(root, 'src/core/database/lafops'), { recursive: true })
+    await writeFile(source, 'export const repository = {}\n')
+    await writeFile(
+      join(root, 'src/main.ts'),
+      [
+        "import { repository as relative } from './core/database/lafops/lafops-tenant-repository'",
+        "import { repository as aliased } from 'src/core/database/lafops/lafops-tenant-repository'",
+        'export const sameRepository = relative === aliased',
+      ].join('\n'),
+    )
+
+    const tsconfigPath = join(root, 'tsconfig.build.json')
+    const tsconfig = JSON.parse(await readFile(tsconfigPath, 'utf8')) as {
+      compilerOptions: { paths: Record<string, string[]> }
+    }
+    tsconfig.compilerOptions.paths['src/*'] = ['./src/*']
+    await writeFile(tsconfigPath, JSON.stringify(tsconfig))
+
+    const config = await resolveViteLinkConfig({
+      root,
+      diagnostics: false,
+      typecheck: false,
+      build: { format: 'esm' },
+    })
+    const viteConfig = createViteInlineConfig(config)
+    const moduleIds: string[] = []
+    const graphObserver = {
+      name: 'test:physical-module-identity',
+      generateBundle() {
+        moduleIds.push(...this.getModuleIds())
+      },
+    } satisfies Plugin
+
+    await build({
+      ...viteConfig,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: [...(viteConfig.plugins ?? []), graphObserver],
+    })
+
+    const physicalSource = toPosixPath(realpathSync.native(source))
+    const physicalModuleIds = moduleIds.filter((id) => {
+      const file = id.split('?')[0]?.replace(/^\/([A-Za-z]:\/)/, '$1')
+      if (!file) return false
+      try {
+        return toPosixPath(realpathSync.native(file)) === physicalSource
+      } catch {
+        return false
+      }
+    })
+    expect(physicalModuleIds).toHaveLength(1)
+
+    const output = await import(pathToFileURL(join(root, 'dist/main.mjs')).href)
+    expect(output.sameRepository).toBe(true)
   })
 })

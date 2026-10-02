@@ -7,6 +7,7 @@ export async function validateResolvedViteLinkConfig(
 ): Promise<void> {
   const errors = [
     ...validateDev(config),
+    ...(await validateSourceRoot(config)),
     ...(await validateBuild(config)),
     ...validateAdapters(config),
     ...validateMetadata(config),
@@ -14,6 +15,12 @@ export async function validateResolvedViteLinkConfig(
   ]
   if (errors.length === 0) return
   throw new Error(`Invalid Vite Link configuration:\n- ${errors.join('\n- ')}`)
+}
+
+async function validateSourceRoot(config: ResolvedViteLinkConfig): Promise<string[]> {
+  return (await isPathContained(config.root, config.sourceRoot))
+    ? []
+    : ['`sourceRoot` must resolve inside the project root.']
 }
 
 function validateDev(config: ResolvedViteLinkConfig): string[] {
@@ -32,9 +39,11 @@ function validateDev(config: ResolvedViteLinkConfig): string[] {
 
 async function validateBuild(config: ResolvedViteLinkConfig): Promise<string[]> {
   const errors: string[] = []
-  if (typeof config.build.outDir !== 'string' || !config.build.outDir.trim()) {
+  const validOutDir = typeof config.build.outDir === 'string' && !!config.build.outDir.trim()
+  const outDir = resolve(config.root, validOutDir ? config.build.outDir : '')
+  if (!validOutDir) {
     errors.push('`build.outDir` must be a non-empty string.')
-  } else if (!(await isPathContained(config.root, resolve(config.root, config.build.outDir)))) {
+  } else if (!(await isPathContained(config.root, outDir))) {
     errors.push('`build.outDir` must resolve inside the project root.')
   }
   for (const [name, value] of [
@@ -43,9 +52,31 @@ async function validateBuild(config: ResolvedViteLinkConfig): Promise<string[]> 
   ] as const) {
     if (typeof value !== 'string' || !value.trim() || isAbsoluteOrParentPath(value)) {
       errors.push(`\`${name}\` must be a relative path inside the build output directory.`)
+    } else if (
+      validOutDir &&
+      !(await isBuildOutputPathContained(config.root, outDir, resolve(outDir, value)))
+    ) {
+      errors.push(`\`${name}\` must resolve inside the build output directory.`)
     }
   }
   return errors
+}
+
+async function isBuildOutputPathContained(
+  root: string,
+  outDir: string,
+  target: string,
+): Promise<boolean> {
+  if (isOutside(relative(outDir, target)) || !(await isPathContained(root, target))) return false
+
+  let realOutDir: string
+  try {
+    realOutDir = await realpath(outDir)
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return true
+    throw error
+  }
+  return !isOutside(relative(realOutDir, await findNearestExistingRealPath(target)))
 }
 
 async function isPathContained(root: string, target: string): Promise<boolean> {
@@ -121,7 +152,7 @@ function isAbsoluteOrParentPath(path: string): boolean {
   const normalized = path.replaceAll('\\', '/')
   return (
     normalized.startsWith('/') ||
-    /^[A-Za-z]:\//.test(normalized) ||
+    /^[A-Za-z]:/.test(normalized) ||
     normalized.split('/').includes('..')
   )
 }

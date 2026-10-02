@@ -1,4 +1,5 @@
 import { writeFile } from 'node:fs/promises'
+import { createServer } from 'node:net'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -38,6 +39,7 @@ describe('managed development session', () => {
 
     session = await startDevSession({ root, config: configPath })
     await session.ready
+    await session.applicationReady
     await expectResponse(port, 'version-one')
 
     await writeServerEntry(root, runtimeUrl, 'version-two')
@@ -91,6 +93,7 @@ describe('managed development session', () => {
 
       await writeServerEntry(root, runtimeUrl, 'recovered')
       await session.ready
+      await session.applicationReady
       await expectResponse(port, 'recovered')
     } finally {
       errorSpy.mockRestore()
@@ -130,6 +133,7 @@ describe('managed development session', () => {
 
       session = await startDevSession({ root, config: configPath })
       await session.ready
+      await session.applicationReady
       await expectJsonResponse(port, {
         nodeEnv: 'development',
         sentinel: 'development-file',
@@ -144,6 +148,85 @@ describe('managed development session', () => {
       if (originalNodeEnv === undefined) delete process.env.NODE_ENV
       else process.env.NODE_ENV = originalNodeEnv
     }
+  }, 15_000)
+
+  it('keeps spawn readiness compatible and rejects application readiness on a port conflict', async () => {
+    const occupied = createServer()
+    await new Promise<void>((resolvePromise) => occupied.listen(0, '127.0.0.1', resolvePromise))
+    const address = occupied.address()
+    if (!address || typeof address === 'string') throw new Error('Expected a TCP address')
+    const port = address.port
+    const root = await createFixture()
+    const pluginUrl = pathToFileURL(resolve('src/plugin.ts')).href
+    const runtimeUrl = pathToFileURL(resolve('src/runtime.ts')).href
+    const configPath = join(root, 'vite.config.ts')
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      await writeFile(
+        configPath,
+        [
+          `import viteLink from ${JSON.stringify(pluginUrl)}`,
+          'export default {',
+          '  plugins: [viteLink({',
+          '    clearScreen: false,',
+          '    diagnostics: false,',
+          '    typecheck: false,',
+          `    dev: { port: ${port}, gracefulTimeout: 100 },`,
+          '  })],',
+          '}',
+        ].join('\n'),
+      )
+      await writeServerEntry(root, runtimeUrl, 'blocked')
+
+      session = await startDevSession({ root, config: configPath })
+      await session.ready
+      await expect(session.applicationReady).rejects.toThrow(`PORT=${port}`)
+      expect(errorSpy).toHaveBeenCalled()
+    } finally {
+      await session?.close()
+      session = undefined
+      await new Promise<void>((resolvePromise, reject) =>
+        occupied.close((error) => (error ? reject(error) : resolvePromise())),
+      )
+      errorSpy.mockRestore()
+    }
+  }, 15_000)
+
+  it('waits for bootstrap completion before reporting application readiness', async () => {
+    const root = await createFixture()
+    const pluginUrl = pathToFileURL(resolve('src/plugin.ts')).href
+    const runtimeUrl = pathToFileURL(resolve('src/runtime.ts')).href
+    const configPath = join(root, 'vite.config.ts')
+    await writeFile(
+      configPath,
+      [
+        `import viteLink from ${JSON.stringify(pluginUrl)}`,
+        'export default {',
+        '  plugins: [viteLink({ clearScreen: false, diagnostics: false, typecheck: false })],',
+        '}',
+      ].join('\n'),
+    )
+    await writeFile(
+      join(root, 'src/main.ts'),
+      [
+        `import { runManagedBootstrap } from ${JSON.stringify(runtimeUrl)}`,
+        'void runManagedBootstrap(async () => {',
+        '  await new Promise((resolvePromise) => setTimeout(resolvePromise, 250))',
+        '  return { close: () => {} }',
+        '})',
+      ].join('\n'),
+    )
+
+    session = await startDevSession({ root, config: configPath })
+    await session.ready
+    await expect(
+      Promise.race([
+        session.applicationReady.then(() => 'ready' as const),
+        wait(25).then(() => 'pending' as const),
+      ]),
+    ).resolves.toBe('pending')
+    await session.applicationReady
   }, 15_000)
 })
 

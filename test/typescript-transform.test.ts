@@ -7,6 +7,19 @@ import { createNestTypeScriptTransformPlugin } from '../src/adapters/nest'
 import { createFixture, resolveNestTestConfig as resolveNestViteConfig } from './helpers'
 
 describe('Nest TypeScript transform', () => {
+  it('rejects malformed decorated TypeScript instead of emitting a broken application', async () => {
+    const root = await createFixture()
+    const config = await resolveNestViteConfig({ root })
+    const plugin = createNestTypeScriptTransformPlugin(config)
+    await expect(
+      callTransform(
+        plugin,
+        'export class AppService { BROKEN_SENTINEL !@ }',
+        `${root}/src/app.service.ts`,
+      ),
+    ).rejects.toThrow(/TS1436|TS1146|TS1109/)
+  })
+
   it('runs when consumers invoke Vite directly instead of the managed CLI', async () => {
     const root = await createFixture()
     await writeFile(

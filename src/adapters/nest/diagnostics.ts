@@ -1,4 +1,5 @@
 import fg from 'fast-glob'
+import { mapConcurrent } from '../../core/concurrency'
 import { fileExists, readText } from '../../core/fs'
 import { getCompilerOptions } from '../../core/tsconfig'
 import type { Diagnostic, ResolvedViteLinkConfig, SourceDiagnosticContext } from '../../types'
@@ -29,8 +30,13 @@ async function projectUsesShutdownHooks(config: ResolvedViteLinkConfig): Promise
     ignore: ['**/*.test.ts', '**/*.spec.ts', '**/node_modules/**', '**/dist/**'],
     followSymbolicLinks: false,
   })
-  const source = await Promise.all(files.sort().map((file) => readText(file)))
-  return source.some((text) => /enableShutdownHooks\s*\(/.test(text))
+  let found = false
+  await mapConcurrent(files.sort(), 16, async (file) => {
+    if (found) return
+    const text = await readText(file)
+    if (/enableShutdownHooks\s*\(/.test(text)) found = true
+  })
+  return found
 }
 
 export function runNestSourceDiagnostics({

@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { resolveViteLinkConfig } from '../src/config/defaults'
 import { ChildRunner, RestartController } from '../src/process'
 import { createFixture } from './helpers'
@@ -15,7 +15,7 @@ describe('ChildRunner', () => {
       join(root, 'dist/main.cjs'),
       [
         'const { writeFileSync } = require("node:fs")',
-        `writeFileSync(${JSON.stringify(readyFile)}, "ready")`,
+        `writeFileSync(${JSON.stringify(readyFile)}, process.env.VITE_LINK_MANAGED)`,
         'process.on("message", (message) => {',
         '  if (message?.type !== "vite-link:shutdown-request") return',
         `  writeFileSync(${JSON.stringify(closedFile)}, "closed")`,
@@ -34,11 +34,59 @@ describe('ChildRunner', () => {
     const runner = new ChildRunner(config)
 
     runner.start()
-    await waitForFile(readyFile)
+    await runner.applicationReady
     await runner.stop()
 
     await expect(readFile(closedFile, 'utf8')).resolves.toBe('closed')
+    await expect(readFile(readyFile, 'utf8')).resolves.toBe('1')
     expect(runner.currentPid).toBeUndefined()
+  })
+
+  it('rejects application readiness and diagnoses an early exit', async () => {
+    const root = await createFixture()
+    await mkdir(join(root, 'dist'), { recursive: true })
+    await writeFile(join(root, 'dist/main.cjs'), 'process.exit(1)')
+    const config = await resolveViteLinkConfig({
+      root,
+      dev: { port: 49152, nodeArgs: [] },
+      build: { entryFileName: 'main.cjs' },
+    })
+    const errors: unknown[] = []
+    const runner = new ChildRunner(config, (error) => errors.push(error))
+
+    runner.start()
+    await expect(runner.applicationReady).rejects.toThrow(/PORT=49152/)
+    expect(errors).toHaveLength(1)
+    await runner.close()
+  })
+
+  it('does not respawn after closing during an in-flight restart', async () => {
+    const root = await createFixture()
+    const config = await resolveViteLinkConfig({ root })
+    const runner = new ChildRunner(config)
+    let releaseStop!: () => void
+    const stopGate = new Promise<void>((resolvePromise) => {
+      releaseStop = resolvePromise
+    })
+    const stopSpy = vi.spyOn(runner, 'stop').mockImplementation(async () => stopGate)
+    const startSpy = vi.spyOn(runner, 'start')
+    const controller = new RestartController(0, () => runner.restart())
+
+    const restarting = controller.flush()
+    await vi.waitFor(() => expect(stopSpy).toHaveBeenCalledTimes(1))
+    const closingRunner = runner.close()
+    let controllerClosed = false
+    const closingController = controller.close().finally(() => {
+      controllerClosed = true
+    })
+    await Promise.resolve()
+    expect(controllerClosed).toBe(false)
+    controller.schedule()
+    releaseStop()
+    await Promise.all([restarting, closingRunner, closingController])
+
+    expect(startSpy).not.toHaveBeenCalled()
+    expect(controllerClosed).toBe(true)
   })
 
   it('loads dotenv files for the configured Vite mode', async () => {

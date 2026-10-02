@@ -51,8 +51,20 @@ export function createNestTypeScriptTransformPlugin(
       const result = ts.transpileModule(code, {
         fileName: cleanId,
         compilerOptions: compilerOptions!,
-        reportDiagnostics: false,
+        reportDiagnostics: true,
       })
+      const syntaxErrors = (result.diagnostics ?? []).filter(
+        (diagnostic) => diagnostic.file && diagnostic.category === ts.DiagnosticCategory.Error,
+      )
+      if (syntaxErrors.length > 0) {
+        throw new Error(
+          ts.formatDiagnostics(syntaxErrors, {
+            getCanonicalFileName: (fileName) => fileName,
+            getCurrentDirectory: () => '',
+            getNewLine: () => '\n',
+          }),
+        )
+      }
 
       return {
         code: maybePrependReflectMetadata(result.outputText, code, cleanId, entryId!),

@@ -1,4 +1,4 @@
-import { resolve } from 'node:path'
+import { relative, resolve } from 'node:path'
 import type { ResolvedViteLinkConfig, ViteLinkOptions } from '../types'
 import { fileExists } from '../core/fs'
 import { readNearestPackageJson } from '../core/package'
@@ -59,8 +59,10 @@ export async function resolveViteLinkConfig(
 }
 
 function inferSourceRoot(entry: string, root: string): string {
-  const normalized = entry.replaceAll('\\', '/')
-  if (normalized.endsWith('/src/main.ts')) return 'src'
-  if (normalized.includes('/src/')) return entry.slice(0, entry.indexOf('/src/') + 4)
+  const segments = relative(root, entry).split(/[\\/]/)
+  const sourceDirectory = segments.lastIndexOf('src')
+  if (sourceDirectory !== -1 && sourceDirectory < segments.length - 1) {
+    return resolve(root, ...segments.slice(0, sourceDirectory + 1))
+  }
   return root
 }

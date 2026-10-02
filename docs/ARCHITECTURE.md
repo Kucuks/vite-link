@@ -50,11 +50,13 @@ dist/main.cjs or dist/main.mjs
 debounced child restart
 ```
 
-The first successful build starts the application. An initial build error leaves the watcher running so development can recover after the source is fixed. Later successful builds schedule a restart; build errors leave the last successful child running. Restart requests are collapsed and teardown cancels queued work before closing watchers and the child. Partially started development resources are also closed when watcher setup fails.
+The first successful build starts the application. An initial build error leaves the watcher running so development can recover after the source is fixed. Later successful builds schedule a restart; build errors leave the last successful child running. Restart requests are collapsed. Teardown cancels queued work, prevents a restart already in progress from spawning again, drains that restart, and closes watchers and the child. Partially started development resources are also closed when watcher setup fails.
+
+`startDevSession().ready` retains its existing contract: the first successful build spawned a child process. It does not prove that the application is listening. `startDevSession().applicationReady` resolves only after the child reports successful startup through `runManagedBootstrap`; it rejects if that child exits or the session closes first. Applications that do not use the helper can continue using `ready` and should not await `applicationReady`.
 
 ## Process lifecycle
 
-Applications may use `runManagedBootstrap`. When started with an IPC channel, the helper advertises managed-shutdown support. The parent then requests application-level close and waits for process exit. Applications without the helper receive the configured signal. In both cases the runner uses the force signal only after `gracefulTimeout`.
+The child receives `VITE_LINK_MANAGED=1` to distinguish Vite Link's managed development process from unrelated IPC parents. Applications may use `runManagedBootstrap` in that mode. After the bootstrap factory resolves, the helper reports application readiness through IPC and advertises managed-shutdown support. The factory should resolve after the server has begun listening or the worker has completed initialization, and return an object with `close()` for graceful teardown. The parent then requests application-level close and waits for process exit. Applications without the helper receive the configured signal. In both cases the runner uses the force signal only after `gracefulTimeout`.
 
 ## Adapter contract
 

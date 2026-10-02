@@ -13,15 +13,17 @@ export default defineConfig({
 
 ## Project options
 
-| Option          | Default                                     | Meaning                                |
-| --------------- | ------------------------------------------- | -------------------------------------- |
-| `root`          | `process.cwd()`                             | Project root                           |
-| `entry`         | `src/main.ts`                               | Server entry file                      |
-| `tsconfig`      | `tsconfig.build.json`, then `tsconfig.json` | TypeScript configuration               |
-| `sourceRoot`    | inferred from the entry                     | Source-diagnostic boundary             |
-| `clearScreen`   | `true`                                      | Clear console between lifecycle events |
-| `tsconfigPaths` | `true`                                      | Resolve TypeScript path aliases        |
-| `adapters`      | `[]`                                        | Framework or runtime adapters          |
+| Option          | Default                                     | Meaning                                            |
+| --------------- | ------------------------------------------- | -------------------------------------------------- |
+| `root`          | `process.cwd()`                             | Project root                                       |
+| `entry`         | `src/main.ts`                               | Server entry file                                  |
+| `tsconfig`      | `tsconfig.build.json`, then `tsconfig.json` | TypeScript configuration                           |
+| `sourceRoot`    | inferred from the entry                     | Source-diagnostic boundary inside the project root |
+| `clearScreen`   | `true`                                      | Clear console between lifecycle events             |
+| `tsconfigPaths` | `true`                                      | Resolve TypeScript path aliases                    |
+| `adapters`      | `[]`                                        | Framework or runtime adapters                      |
+
+`sourceRoot` must stay inside the project root, including after symlink resolution.
 
 ## Build
 
@@ -97,7 +99,7 @@ assets: [
 ]
 ```
 
-Vite Link rejects output collisions, project-boundary escapes, and unsafe symlink targets. If `src/i18n` exists and is not already configured, it is copied relative to `src` without restarting the child.
+Vite Link rejects collisions between asset mappings and emitted entry and chunk files during builds and watched updates. Build copies also protect emitted source-map files. It also rejects project-boundary escapes and unsafe symlink targets. If `src/i18n` exists and is not already configured, it is copied relative to `src` without restarting the child.
 
 ## Dependencies and monorepos
 
@@ -132,7 +134,7 @@ env: {
 }
 ```
 
-Secret-looking names are refused when `forbidInlineSecrets` is enabled. Runtime environment values and explicit `dev.env` values remain authoritative.
+Only keys listed in `env.inline` are inlined. Their values follow Vite's mode-specific `.env` file loading, with existing process environment values taking precedence. Secret-looking names are refused when `forbidInlineSecrets` is enabled; the same diagnostic also checks user-provided Vite `define` entries. Keys not selected for inlining remain runtime values; explicit `dev.env` values apply to the child process.
 
 ## Metadata commands
 

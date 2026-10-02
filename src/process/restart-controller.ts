@@ -3,6 +3,7 @@ export class RestartController {
   private running = false
   private queued = false
   private closed = false
+  private active: Promise<void> | undefined
 
   constructor(
     private readonly debounce: number,
@@ -27,9 +28,14 @@ export class RestartController {
     }
 
     this.running = true
+    const active = Promise.resolve().then(() => {
+      return this.closed ? undefined : this.restart()
+    })
+    this.active = active
     try {
-      await this.restart()
+      await active
     } finally {
+      if (this.active === active) this.active = undefined
       this.running = false
       if (this.queued && !this.closed) {
         this.queued = false
@@ -38,10 +44,11 @@ export class RestartController {
     }
   }
 
-  close(): void {
+  async close(): Promise<void> {
     this.closed = true
     this.queued = false
     if (this.timer) clearTimeout(this.timer)
     this.timer = undefined
+    await this.active
   }
 }

@@ -12,9 +12,13 @@ export interface AssetCopyResult {
   files: string[]
 }
 
-export async function copyAssets(config: ResolvedViteLinkConfig): Promise<AssetCopyResult> {
+export async function copyAssets(
+  config: ResolvedViteLinkConfig,
+  protectedOutputs: ReadonlySet<string> = collectEmittedOutputPaths(config),
+): Promise<AssetCopyResult> {
   const tasks: Array<{ source: string; target: string; outDir: string }> = []
   const targetOwners = new Map<string, string>()
+  const protectedTargets = normalizeProtectedOutputs(protectedOutputs)
 
   for (const pattern of config.assets) {
     const matches = await matchAssetFiles(config.root, pattern)
@@ -26,6 +30,7 @@ export async function copyAssets(config: ResolvedViteLinkConfig): Promise<AssetC
         file,
       )
       const targetKey = normalizeTargetKey(target)
+      assertNotProtectedOutput(protectedTargets, target)
       const previous = targetOwners.get(targetKey)
       if (previous && previous !== file) {
         throw new Error(`Asset target collision: ${previous} and ${file} both map to ${target}`)
@@ -54,6 +59,7 @@ export async function copyAssets(config: ResolvedViteLinkConfig): Promise<AssetC
 export async function copyChangedAsset(
   config: ResolvedViteLinkConfig,
   file: string,
+  protectedOutputs: ReadonlySet<string> = collectEmittedOutputPaths(config),
 ): Promise<{ copied: boolean; removed: boolean; restart: boolean; target?: string }> {
   const absolute = isAbsolute(file) ? file : resolve(config.root, file)
   const pattern = findMatchingAssetPattern(config, absolute)
@@ -65,6 +71,7 @@ export async function copyChangedAsset(
     pattern,
     absolute,
   )
+  assertNotProtectedOutput(normalizeProtectedOutputs(protectedOutputs), target)
   if (await fileExists(absolute)) {
     await assertRealAssetSourceContained(config.root, absolute)
     await ensureDir(dirname(target))
@@ -182,6 +189,46 @@ async function assertRealAssetTargetContained(
   } catch (error) {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return
     throw error
+  }
+}
+
+/** Collect the emitted entry, chunks and assets reported by a Vite build. */
+export function collectEmittedOutputPaths(
+  config: ResolvedViteLinkConfig,
+  buildResult?: unknown,
+): Set<string> {
+  const outDir = resolve(config.root, config.build.outDir)
+  const paths = new Set<string>([resolve(outDir, config.build.entryFileName)])
+  const results = Array.isArray(buildResult) ? buildResult : [buildResult]
+  for (const result of results) {
+    if (!result || typeof result !== 'object' || !('output' in result)) continue
+    const output = result.output
+    if (!Array.isArray(output)) continue
+    for (const item of output) {
+      if (!item || typeof item !== 'object' || !('fileName' in item)) continue
+      if (typeof item.fileName === 'string') {
+        const emittedPath = resolve(outDir, item.fileName)
+        paths.add(emittedPath)
+        if (
+          'type' in item &&
+          item.type === 'chunk' &&
+          (config.build.sourcemap === true || config.build.sourcemap === 'hidden')
+        ) {
+          paths.add(`${emittedPath}.map`)
+        }
+      }
+    }
+  }
+  return paths
+}
+
+function normalizeProtectedOutputs(paths: ReadonlySet<string>): Set<string> {
+  return new Set([...paths].map((path) => normalizeTargetKey(resolve(path))))
+}
+
+function assertNotProtectedOutput(protectedTargets: ReadonlySet<string>, target: string): void {
+  if (protectedTargets.has(normalizeTargetKey(target))) {
+    throw new Error(`Asset target collision with emitted build output: ${target}`)
   }
 }
 

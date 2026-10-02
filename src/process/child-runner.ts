@@ -19,6 +19,9 @@ export class ChildRunner {
   private child: ChildProcess | undefined
   private stopping: Promise<void> | undefined
   private runtimeManaged = false
+  private closed = false
+  private startup: Promise<void> | undefined
+  private completeStartup: ((error?: Error) => void) | undefined
 
   constructor(
     private readonly config: ResolvedViteLinkConfig,
@@ -29,12 +32,18 @@ export class ChildRunner {
     return this.child?.pid
   }
 
+  get applicationReady(): Promise<void> {
+    return this.startup ?? Promise.reject(new Error('The application process has not started'))
+  }
+
   async restart(): Promise<void> {
+    if (this.closed) return
     await this.stop()
-    this.start()
+    if (!this.closed) this.start()
   }
 
   start(): void {
+    if (this.closed) throw new Error('The application runner is closed')
     if (this.child) return
 
     const entry = resolve(
@@ -52,6 +61,7 @@ export class ChildRunner {
       ...this.config.dev.env,
       NODE_ENV: nodeEnv,
       PORT: port,
+      VITE_LINK_MANAGED: '1',
     }
 
     const child = spawn(process.execPath, [...this.config.dev.nodeArgs, entry], {
@@ -62,6 +72,24 @@ export class ChildRunner {
 
     this.child = child
     this.runtimeManaged = false
+    let resolveStartup!: () => void
+    let rejectStartup!: (error: Error) => void
+    let startupSettled = false
+    this.startup = new Promise<void>((resolvePromise, rejectPromise) => {
+      resolveStartup = resolvePromise
+      rejectStartup = rejectPromise
+    })
+    // A caller may only need the legacy spawn-ready signal. Keep failures handled until
+    // applicationReady is explicitly observed.
+    void this.startup.catch(() => {})
+    const completeStartup = (error?: Error) => {
+      if (startupSettled) return
+      startupSettled = true
+      if (this.completeStartup === completeStartup) this.completeStartup = undefined
+      if (error) rejectStartup(error)
+      else resolveStartup()
+    }
+    this.completeStartup = completeStartup
     console.log(pc.dim(`[vite-link] app started with pid ${child.pid ?? 'unknown'}`))
 
     child.on('message', (message) => {
@@ -71,6 +99,7 @@ export class ChildRunner {
         message.type === VITE_LINK_RUNTIME_READY
       ) {
         this.runtimeManaged = true
+        completeStartup()
       }
     })
 
@@ -79,6 +108,7 @@ export class ChildRunner {
         this.child = undefined
         this.runtimeManaged = false
       }
+      completeStartup(error)
       this.onError(error)
     })
 
@@ -87,10 +117,22 @@ export class ChildRunner {
         this.child = undefined
         this.runtimeManaged = false
       }
+      if (!startupSettled) {
+        const error = new Error(
+          `Application exited before reporting readiness (code=${code ?? 'null'}, signal=${signal ?? 'null'}). Check startup errors and whether PORT=${port} is already in use. Use runManagedBootstrap to report successful startup.`,
+        )
+        completeStartup(error)
+        if (code !== 0 && !this.closed) this.onError(error)
+      }
       console.log(
         pc.dim(`[vite-link] app exited code=${code ?? 'null'} signal=${signal ?? 'null'}`),
       )
     })
+  }
+
+  async close(): Promise<void> {
+    this.closed = true
+    await this.stop()
   }
 
   async stop(): Promise<void> {
@@ -101,6 +143,7 @@ export class ChildRunner {
     const runtimeManaged = this.runtimeManaged
     this.child = undefined
     this.runtimeManaged = false
+    this.completeStartup?.(new Error('Application stopped before reporting readiness'))
 
     this.stopping = new Promise<void>((resolvePromise) => {
       let settled = false

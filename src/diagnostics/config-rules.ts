@@ -1,4 +1,5 @@
 import { resolve } from 'node:path'
+import type { UserConfig } from 'vite'
 import type { Diagnostic, ResolvedViteLinkConfig } from '../types'
 import { fileExists, readText } from '../core/fs'
 import { getCompilerOptions } from '../core/tsconfig'
@@ -16,15 +17,76 @@ const NATIVE_DEPENDENCIES = [
   '@prisma/client',
 ]
 
-export async function runConfigDiagnostics(config: ResolvedViteLinkConfig): Promise<Diagnostic[]> {
+export async function runConfigDiagnostics(
+  config: ResolvedViteLinkConfig,
+  viteConfig?: UserConfig,
+): Promise<Diagnostic[]> {
   return [
     ...checkTsconfig(config),
     ...(await checkEntry(config)),
     ...checkPackage(config),
     ...checkEnvInlining(config),
+    ...checkViteDefine(config, viteConfig),
     ...checkMetadata(config),
     ...(await checkViteConfigText(config)),
   ]
+}
+
+function checkViteDefine(config: ResolvedViteLinkConfig, viteConfig?: UserConfig): Diagnostic[] {
+  const define = viteConfig?.define
+  if (!define) return []
+
+  const diagnostics: Diagnostic[] = []
+  for (const [key, value] of Object.entries(define)) {
+    if (key === 'process.env' || key === 'globalThis.process.env' || key === 'import.meta.env') {
+      diagnostics.push({
+        code: 'PROCESS_ENV_INLINED',
+        severity: 'fatal',
+        message: `Vite define entry "${key}" replaces the entire environment object.`,
+        hint: 'Keep environment access at runtime and inline only explicitly selected safe constants.',
+      })
+    } else if (
+      config.env.forbidInlineSecrets &&
+      (isSecretDefineKey(key) || hasSecretNamedProperty(value))
+    ) {
+      diagnostics.push({
+        code: 'VITE_DEFINE_SECRET_INLINED',
+        severity: 'fatal',
+        message: `Vite define entry "${key}" may inline a secret into the bundle.`,
+        hint: 'Remove this define entry and read the value from the runtime environment.',
+      })
+    }
+  }
+  return diagnostics
+}
+
+function isSecretDefineKey(key: string): boolean {
+  const match = /^(?:(?:globalThis\.)?process\.env|import\.meta\.env)\.(.+)$/.exec(key)
+  return match !== null && looksLikeSecretName(match[1] ?? '')
+}
+
+function hasSecretNamedProperty(value: unknown): boolean {
+  let candidate = value
+  if (typeof value === 'string' && value.trimStart().startsWith('{')) {
+    try {
+      candidate = JSON.parse(value) as unknown
+    } catch {
+      return false
+    }
+  }
+  if (!isRecord(candidate)) return false
+  const seen = new WeakSet<object>()
+  const pending: unknown[] = [candidate]
+  while (pending.length > 0) {
+    const current = pending.pop()
+    if (!isRecord(current) || seen.has(current)) continue
+    seen.add(current)
+    for (const [key, child] of Object.entries(current)) {
+      if (looksLikeSecretName(key)) return true
+      if (isRecord(child)) pending.push(child)
+    }
+  }
+  return false
 }
 
 function checkMetadata(config: ResolvedViteLinkConfig): Diagnostic[] {

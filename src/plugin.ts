@@ -1,5 +1,5 @@
-import type { Plugin } from 'vite'
-import { copyAssets } from './assets'
+import type { Plugin, ResolvedConfig } from 'vite'
+import { collectEmittedOutputPaths, copyAssets } from './assets'
 import { clearConsole } from './core/console'
 import { resolveViteLinkConfig } from './config/defaults'
 import { createViteInlineConfig } from './config/vite'
@@ -13,6 +13,8 @@ import type {
 
 export function viteLink(options: ViteLinkOptions = {}): ViteLinkPluginOption {
   let resolvedConfig: ReturnType<typeof resolveViteLinkConfig> | undefined
+  let resolvedViteConfig: ResolvedConfig | undefined
+  const emittedOutputs = new Map<string, { fileName: string; type: string }>()
   const plugin: ViteLinkPlugin = {
     name: 'vite-link',
     enforce: 'pre',
@@ -29,13 +31,21 @@ export function viteLink(options: ViteLinkOptions = {}): ViteLinkPluginOption {
       return createViteInlineConfig(resolved, { includeAdapterPlugins: false })
     },
 
+    configResolved(config) {
+      resolvedViteConfig = config
+    },
+
     async buildStart() {
+      emittedOutputs.clear()
       if (process.env.VITE_LINK_CLI_COMMAND === 'dev') return
 
       const resolved = await (resolvedConfig ??= resolveViteLinkConfig(options, 'production'))
       if (!resolved.diagnostics.enabled) return
 
-      const diagnostics = await runDiagnostics(resolved)
+      const diagnostics = await runDiagnostics(
+        resolved,
+        resolvedViteConfig?.define ? { define: resolvedViteConfig.define } : undefined,
+      )
       reportDiagnostics(diagnostics)
 
       if (
@@ -48,9 +58,20 @@ export function viteLink(options: ViteLinkOptions = {}): ViteLinkPluginOption {
       }
     },
 
+    writeBundle(_options, bundle) {
+      for (const output of Object.values(bundle)) {
+        emittedOutputs.set(output.fileName, { fileName: output.fileName, type: output.type })
+      }
+    },
+
     async closeBundle() {
       const resolved = await (resolvedConfig ??= resolveViteLinkConfig(options, 'production'))
-      if (resolved.assets.length > 0) await copyAssets(resolved)
+      if (resolved.assets.length > 0) {
+        await copyAssets(
+          resolved,
+          collectEmittedOutputPaths(resolved, { output: [...emittedOutputs.values()] }),
+        )
+      }
     },
 
     configureServer(server) {

@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import type { UserConfig } from 'vite'
+import { loadEnv, type UserConfig } from 'vite'
 import { createTsconfigPathResolverPlugin } from '../core/alias'
 import { matchesPattern } from '../core/match'
 import type { ResolvedViteLinkConfig } from '../types'
@@ -83,11 +83,17 @@ function createEnvDefine(config: ResolvedViteLinkConfig): Record<string, string>
     define['process.env.NODE_ENV'] = 'process.env.NODE_ENV'
   }
 
-  for (const key of config.env.inline) {
-    if (config.env.keepRuntime && key === 'NODE_ENV') continue
-    if (config.env.forbidInlineSecrets && looksLikeSecretName(key)) continue
-    if (key in process.env) {
-      define[`process.env.${key}`] = JSON.stringify(process.env[key])
+  const inlineKeys = config.env.inline.filter(
+    (key) =>
+      key.length > 0 &&
+      !(config.env.keepRuntime && key === 'NODE_ENV') &&
+      !(config.env.forbidInlineSecrets && looksLikeSecretName(key)),
+  )
+  const env = inlineKeys.length > 0 ? loadEnv(config.mode, config.root, inlineKeys) : {}
+
+  for (const key of inlineKeys) {
+    if (key in env) {
+      define[`process.env.${key}`] = JSON.stringify(env[key])
     }
   }
 

@@ -8,7 +8,7 @@
   <a href="https://www.npmjs.com/package/vite-link"><img alt="npm version" src="https://img.shields.io/npm/v/vite-link?color=646cff"></a>
   <a href="https://www.npmjs.com/package/vite-link"><img alt="npm downloads" src="https://img.shields.io/npm/dw/vite-link?color=646cff"></a>
   <a href="https://github.com/Kucuks/vite-link/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/Kucuks/vite-link/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Node.js support" src="https://img.shields.io/badge/Node.js-%5E20.19%20%7C%7C%20%3E%3D22.12-339933?logo=nodedotjs&logoColor=white">
+  <img alt="Node.js support" src="https://img.shields.io/badge/Node.js-26.8.1-339933?logo=nodedotjs&logoColor=white">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
 </p>
 
@@ -55,12 +55,12 @@ Use Vite Link when a Node backend needs a repeatable build-and-restart boundary.
 
 ## Compatibility
 
-| Dependency | Supported                 | Release evidence                                                       |
-| ---------- | ------------------------- | ---------------------------------------------------------------------- |
-| Node.js    | `^20.19.0` or `>=22.12.0` | CI covers the minimums, Node 24, Windows, macOS, and Linux             |
-| Vite       | `>=8.0.0 <9`              | Packed consumers cover `8.0.0` and `8.2.2`                             |
-| TypeScript | `>=5.6.0 <7`              | Packed consumers cover `5.6.3`, `5.7.3`, `5.8.3`, `5.9.3`, and `6.0.3` |
-| Modules    | CommonJS and ESM          | Both package entry points and built application output are verified    |
+| Dependency | Supported      | Release evidence                                                       |
+| ---------- | -------------- | ---------------------------------------------------------------------- |
+| Node.js    | `>=26.8.1 <27` | CI runs Node 26.8.1 on Windows, macOS, and Linux                       |
+| Vite       | `>=8.0.0 <9`   | Packed consumers cover `8.0.0` and `8.2.2`                             |
+| TypeScript | `>=5.6.0 <7`   | Packed consumers cover `5.6.3`, `5.7.3`, `5.8.3`, `5.9.3`, and `6.0.3` |
+| Modules    | CommonJS/ESM   | Both package entry points and built application output are verified    |
 
 The `0.1.x` release line is pinned to Vite `8.2.2` and TypeScript `6.0.3`. TypeScript 7 is not supported yet because [its 7.0 release does not ship a programmatic compiler API](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/), which adapter transforms and source diagnostics require.
 

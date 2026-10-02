@@ -29,7 +29,7 @@ jobs:
           ref: v${{ inputs.version }}
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26.8.1
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - run: npm ci

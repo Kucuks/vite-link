@@ -152,6 +152,7 @@ try {
     [
       'install',
       '--no-audit',
+      '--registry=https://registry.npmjs.org',
       tarball,
       '@nestjs/common@^11.1.27',
       '@nestjs/core@^11.1.27',

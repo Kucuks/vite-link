@@ -1,0 +1,43 @@
+# Development source and verification fixtures
+src/
+test/
+tests/
+examples/
+scripts/
+research/
+
+# Repository and editor metadata
+.git/
+.github/
+.agents/
+.codex/
+.vscode/
+.idea/
+
+# Dependencies, caches, logs, and local delivery artifacts
+node_modules/
+coverage/
+.cache/
+.vite/
+.turbo/
+.tmp/
+tmp/
+artifacts/
+vendor/
+rollback*/
+*.log
+*.tgz
+*.zip
+performance*.json
+
+# Local environment and registry credentials
+.env
+.env.*
+**/.env
+**/.env.*
+.npmrc
+**/.npmrc
+credentials*
+**/credentials*
+
+# Keep dist, docs, package.json, README.md, and LICENSE publishable.

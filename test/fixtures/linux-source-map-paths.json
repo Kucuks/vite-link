@@ -1,0 +1,226 @@
+{
+  "origin": "Path metadata from the 18 real vite-link@0.1.5 Linux source maps; mappings and source text omitted.",
+  "projectRoot": "/home/runner/work/vite-link/vite-link",
+  "maps": [
+    {
+      "path": "dist/cli/bin.cjs.map",
+      "map": {
+        "version": 3,
+        "sources": [
+          "bin.cjs",
+          "../../src/cli/bin.ts",
+          "../../src/cli/commands/build.ts",
+          "../../src/assets/watch.ts",
+          "../../src/metadata/run.ts",
+          "../../src/typecheck/run.ts",
+          "../../src/config/load.ts",
+          "../../src/cli/context.ts",
+          "../../src/cli/validate.ts",
+          "../../src/cli/commands/dev.ts",
+          "../../src/process/child-runner.ts",
+          "../../src/process/restart-controller.ts",
+          "../../src/process/signals.ts",
+          "../../src/cli/commands/diagnostics.ts",
+          "../../src/cli/commands/metadata.ts"
+        ],
+        "file": "/home/runner/work/vite-link/vite-link/dist/cli/bin.cjs"
+      }
+    },
+    {
+      "path": "dist/cli/bin.js.map",
+      "map": {
+        "version": 3,
+        "sources": [
+          "../../src/cli/bin.ts",
+          "../../src/cli/commands/build.ts",
+          "../../src/assets/watch.ts",
+          "../../src/metadata/run.ts",
+          "../../src/typecheck/run.ts",
+          "../../src/config/load.ts",
+          "../../src/cli/context.ts",
+          "../../src/cli/validate.ts",
+          "../../src/cli/commands/dev.ts",
+          "../../src/process/child-runner.ts",
+          "../../src/process/restart-controller.ts",
+          "../../src/process/signals.ts",
+          "../../src/cli/commands/diagnostics.ts",
+          "../../src/cli/commands/metadata.ts"
+        ]
+      }
+    },
+    {
+      "path": "dist/chunk-4CZBMZM3.cjs.map",
+      "map": {
+        "version": 3,
+        "sources": ["chunk-4CZBMZM3.cjs", "../src/plugin.ts"],
+        "file": "/home/runner/work/vite-link/vite-link/dist/chunk-4CZBMZM3.cjs"
+      }
+    },
+    {
+      "path": "dist/chunk-KTAXXYXG.js.map",
+      "map": {
+        "version": 3,
+        "sources": ["../src/plugin.ts"]
+      }
+    },
+    {
+      "path": "dist/chunk-LYKSEHNE.js.map",
+      "map": {
+        "version": 3,
+        "sources": [
+          "../src/assets/copy.ts",
+          "../src/core/concurrency.ts",
+          "../src/core/fs.ts",
+          "../src/core/glob.ts",
+          "../src/core/console.ts",
+          "../src/config/defaults.ts",
+          "../src/core/package.ts",
+          "../src/core/tsconfig.ts",
+          "../src/config/normalizers/assets.ts",
+          "../src/config/normalizers/build.ts",
+          "../src/config/normalizers/external.ts",
+          "../src/config/normalizers/runtime.ts",
+          "../src/config/validate.ts",
+          "../src/config/vite.ts",
+          "../src/core/alias.ts",
+          "../src/core/match.ts",
+          "../src/core/env-policy.ts",
+          "../src/diagnostics/config-rules.ts",
+          "../src/diagnostics/source-rules.ts",
+          "../src/diagnostics/rules.ts",
+          "../src/diagnostics/reporter.ts"
+        ]
+      }
+    },
+    {
+      "path": "dist/chunk-OTLVF4NL.cjs.map",
+      "map": {
+        "version": 3,
+        "sources": [
+          "chunk-OTLVF4NL.cjs",
+          "../src/assets/copy.ts",
+          "../src/core/concurrency.ts",
+          "../src/core/fs.ts",
+          "../src/core/glob.ts",
+          "../src/core/console.ts",
+          "../src/config/defaults.ts",
+          "../src/core/package.ts",
+          "../src/core/tsconfig.ts",
+          "../src/config/normalizers/assets.ts",
+          "../src/config/normalizers/build.ts",
+          "../src/config/normalizers/external.ts",
+          "../src/config/normalizers/runtime.ts",
+          "../src/config/validate.ts",
+          "../src/config/vite.ts",
+          "../src/core/alias.ts",
+          "../src/core/match.ts",
+          "../src/core/env-policy.ts",
+          "../src/diagnostics/config-rules.ts",
+          "../src/diagnostics/source-rules.ts",
+          "../src/diagnostics/rules.ts",
+          "../src/diagnostics/reporter.ts"
+        ],
+        "file": "/home/runner/work/vite-link/vite-link/dist/chunk-OTLVF4NL.cjs"
+      }
+    },
+    {
+      "path": "dist/chunk-R4UF7YOG.cjs.map",
+      "map": {
+        "version": 3,
+        "sources": ["chunk-R4UF7YOG.cjs", "../src/process/protocol.ts"],
+        "file": "/home/runner/work/vite-link/vite-link/dist/chunk-R4UF7YOG.cjs"
+      }
+    },
+    {
+      "path": "dist/chunk-VUE532K2.cjs.map",
+      "map": {
+        "version": 3,
+        "sources": ["chunk-VUE532K2.cjs", "../src/runtime.ts"],
+        "file": "/home/runner/work/vite-link/vite-link/dist/chunk-VUE532K2.cjs"
+      }
+    },
+    {
+      "path": "dist/chunk-W2UUVRMZ.js.map",
+      "map": {
+        "version": 3,
+        "sources": ["../src/process/protocol.ts"]
+      }
+    },
+    {
+      "path": "dist/chunk-XARZ6MZ2.js.map",
+      "map": {
+        "version": 3,
+        "sources": ["../src/runtime.ts"]
+      }
+    },
+    {
+      "path": "dist/index.cjs.map",
+      "map": {
+        "version": 3,
+        "sources": ["index.cjs"],
+        "file": "/home/runner/work/vite-link/vite-link/dist/index.cjs"
+      }
+    },
+    {
+      "path": "dist/index.js.map",
+      "map": {
+        "version": 3,
+        "sources": []
+      }
+    },
+    {
+      "path": "dist/nest.cjs.map",
+      "map": {
+        "version": 3,
+        "sources": [
+          "nest.cjs",
+          "../src/adapters/nest/diagnostics.ts",
+          "../src/adapters/nest/typescript-transform.ts",
+          "../src/adapters/nest/index.ts"
+        ],
+        "file": "/home/runner/work/vite-link/vite-link/dist/nest.cjs"
+      }
+    },
+    {
+      "path": "dist/nest.js.map",
+      "map": {
+        "version": 3,
+        "sources": [
+          "../src/adapters/nest/diagnostics.ts",
+          "../src/adapters/nest/typescript-transform.ts",
+          "../src/adapters/nest/index.ts"
+        ]
+      }
+    },
+    {
+      "path": "dist/plugin.cjs.map",
+      "map": {
+        "version": 3,
+        "sources": ["plugin.cjs"],
+        "file": "/home/runner/work/vite-link/vite-link/dist/plugin.cjs"
+      }
+    },
+    {
+      "path": "dist/plugin.js.map",
+      "map": {
+        "version": 3,
+        "sources": []
+      }
+    },
+    {
+      "path": "dist/runtime.cjs.map",
+      "map": {
+        "version": 3,
+        "sources": ["runtime.cjs"],
+        "file": "/home/runner/work/vite-link/vite-link/dist/runtime.cjs"
+      }
+    },
+    {
+      "path": "dist/runtime.js.map",
+      "map": {
+        "version": 3,
+        "sources": []
+      }
+    }
+  ]
+}

@@ -12,6 +12,7 @@ npm run check
 ```
 
 Use a Node version supported by `package.json`; `.nvmrc` provides the default development version.
+Package verification also uses the platform's `tar` command to inspect the generated archive.
 
 ## Make a change
 

@@ -68,7 +68,7 @@ async function normalizeBuildMaps(directory: string, projectRoot: string): Promi
   }
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+if (process.argv[1] && resolve(process.argv[1]) === import.meta.filename) {
+  const projectRoot = resolve(import.meta.dirname, '..')
   await normalizeBuildMaps(join(projectRoot, 'dist'), projectRoot)
 }

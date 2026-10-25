@@ -69,6 +69,19 @@ if (packed) {
   }
 
   for (const path of paths) {
+    if (path.endsWith('.map')) {
+      const map = JSON.parse(readFileSync(path, 'utf8')) as {
+        sources?: string[]
+        sourceRoot?: string
+      }
+      if (
+        [...(map.sources ?? []), map.sourceRoot ?? ''].some((source) =>
+          /^(?:\/|[A-Za-z]:[\\/]|file:)/.test(source),
+        )
+      ) {
+        errors.push(`source map contains a builder-local absolute path: ${path}`)
+      }
+    }
     if (
       !['package.json', 'README.md', 'LICENSE'].includes(path) &&
       !path.startsWith('dist/') &&

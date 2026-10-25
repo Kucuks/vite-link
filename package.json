@@ -117,7 +117,7 @@
     "test:smoke:nest": "npm run build && npm run smoke:nest"
   },
   "dependencies": {
-    "cac": "^6.7.14",
+    "cac": "^7.1.0",
     "chokidar": "^4.0.3",
     "fast-glob": "^3.3.3",
     "micromatch": "^4.0.8",

@@ -27,19 +27,22 @@ async function createSourceDiagnosticContext(
   file: string,
 ): Promise<SourceDiagnosticContext> {
   const text = await readText(file)
+  let sourceFile: ts.SourceFile | undefined
   return {
     config,
     file,
     text,
-    sourceFile: ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true),
+    get sourceFile() {
+      return (sourceFile ??= ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true))
+    },
+    set sourceFile(value: ts.SourceFile) {
+      sourceFile = value
+    },
   }
 }
 
-function runCoreSourceDiagnostics({
-  file,
-  text,
-  sourceFile,
-}: SourceDiagnosticContext): Diagnostic[] {
+function runCoreSourceDiagnostics(context: SourceDiagnosticContext): Diagnostic[] {
+  const { file, text } = context
   const diagnostics: Diagnostic[] = []
 
   if (/entities\s*:\s*\[[^\]]*\*\*\/\*\.entity/.test(text)) {
@@ -60,7 +63,7 @@ function runCoreSourceDiagnostics({
       hint: 'Copy migrations as assets or build migrations separately.',
     })
   }
-  if (hasNonLiteralDynamicImport(sourceFile)) {
+  if (mayHaveDynamicImport(text) && hasNonLiteralDynamicImport(context.sourceFile)) {
     diagnostics.push({
       code: 'DYNAMIC_IMPORT_NON_LITERAL',
       severity: 'warn',
@@ -71,6 +74,15 @@ function runCoreSourceDiagnostics({
   }
 
   return diagnostics
+}
+
+function mayHaveDynamicImport(text: string): boolean {
+  if (!text.includes('import') && !text.includes('\\')) return false
+  // Comments can separate the keyword and `(`; escapes can spell the keyword.
+  // Let the parser handle those cases, including imports inside template expressions.
+  return (
+    /\bimport\s*\(/.test(text) || text.includes('/*') || text.includes('//') || text.includes('\\')
+  )
 }
 
 function hasNonLiteralDynamicImport(source: ts.SourceFile): boolean {

@@ -52,7 +52,7 @@ export async function runManagedBootstrap<T extends ManagedApp>(
       if (signal) {
         process.kill(process.pid, signal)
       } else if (process.connected) {
-        process.disconnect()
+        process.disconnect?.()
       }
     }
   }

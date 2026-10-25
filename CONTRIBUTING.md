@@ -31,10 +31,13 @@ Changes that affect concurrency, watchers, process shutdown, package boundaries,
 
 ```bash
 npm run perf:product -- performance-local.json
+npm run perf:startup -- performance-startup.json
 npm run perf:compare:nest -- --output performance-nest-comparison.json
 ```
 
 The product benchmark is a regression signal for Vite Link internals. The Nest comparison uses the same generated application for both build paths; its HTTP sample is a runtime-parity check, not an application-throughput claim.
+
+The startup benchmark isolates source diagnostics and Nest transform hooks. It does not measure complete server startup. Product alias `cold` samples use a fresh resolver for each repetition; filesystem caches remain warm.
 
 ## Pull requests
 

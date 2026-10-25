@@ -39,11 +39,11 @@ async function projectUsesShutdownHooks(config: ResolvedViteLinkConfig): Promise
   return found
 }
 
-export function runNestSourceDiagnostics({
-  file,
-  sourceFile,
-}: SourceDiagnosticContext): Diagnostic[] {
-  const injectionNames = findTypeOnlyInjectionNames(sourceFile)
+export function runNestSourceDiagnostics(context: SourceDiagnosticContext): Diagnostic[] {
+  const { file, text } = context
+  // A type-only import needs the `type` keyword. Escapes take the parser path.
+  if (!text.includes('type') && !text.includes('\\')) return []
+  const injectionNames = findTypeOnlyInjectionNames(context.sourceFile)
   if (injectionNames.length === 0) return []
   return [
     {

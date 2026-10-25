@@ -64,7 +64,7 @@ An adapter owns a stable name and may provide:
 
 - Vite plugins constructed from toolkit options;
 - resolved-config diagnostics;
-- per-source diagnostics sharing the core's single TypeScript parse.
+- per-source diagnostics sharing a lazily created TypeScript parse. Text-only checks do not construct an AST; adapters can access `sourceFile` as before.
 
 The core has no Nest imports, package defaults, decorator rules, or Nest-specific messages. The Nest adapter is a separate export.
 

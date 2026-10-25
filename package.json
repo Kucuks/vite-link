@@ -1,6 +1,6 @@
 {
   "name": "vite-link",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Modular Vite/Rolldown build, diagnostics, asset and managed-runtime toolkit for Node.js backends.",
   "private": false,
   "type": "module",
@@ -85,7 +85,9 @@
   },
   "files": [
     "dist",
-    "docs",
+    "docs/ADAPTERS.md",
+    "docs/ARCHITECTURE.md",
+    "docs/CONFIGURATION.md",
     "LICENSE"
   ],
   "engines": {
@@ -99,6 +101,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "perf:product": "tsx test/performance/run-product-performance.ts",
+    "perf:startup": "tsx test/performance/run-startup-performance.ts",
     "perf:compare:nest": "npm run build && tsx test/performance/run-nest-comparison.ts",
     "lint": "oxlint .",
     "format": "prettier --write .",

@@ -37,7 +37,14 @@ export async function createFixturePackage(root: string, tarball: string): Promi
 export async function installFixtureDependencies(root: string): Promise<void> {
   await runCommand({
     command: 'npm',
-    args: ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--package-lock=false'],
+    args: [
+      'install',
+      '--ignore-scripts',
+      '--no-audit',
+      '--no-fund',
+      '--package-lock=false',
+      '--registry=https://registry.npmjs.org',
+    ],
     cwd: root,
   })
 }

@@ -11,6 +11,7 @@ research/
 .github/
 .agents/
 .codex/
+.read/
 .vscode/
 .idea/
 

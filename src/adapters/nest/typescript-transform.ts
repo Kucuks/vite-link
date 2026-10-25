@@ -47,7 +47,9 @@ export function createNestTypeScriptTransformPlugin(
       if (cleanId.includes('/node_modules/') || cleanId.includes('\\node_modules\\')) return null
 
       await prepare()
-      if (normalizeId(cleanId) !== entryId && !hasDecoratorToken(code)) return null
+      if (normalizeId(cleanId) !== entryId && (!code.includes('@') || !hasDecoratorToken(code))) {
+        return null
+      }
       const result = ts.transpileModule(code, {
         fileName: cleanId,
         compilerOptions: compilerOptions!,

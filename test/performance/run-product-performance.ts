@@ -172,15 +172,22 @@ async function measureAliasResolution(root: string): Promise<{ cold: Samples; ca
   const context = {} as never
   const options = { isEntry: false }
 
-  const run = async () => {
+  const run = async (resolver = hook) => {
     for (let index = 0; index < SOURCE_FILE_COUNT; index += 1) {
       const suffix = String(index).padStart(4, '0')
-      const resolved = hook.call(context, `@bench/module-${suffix}`, importer, options)
+      const resolved = resolver.call(context, `@bench/module-${suffix}`, importer, options)
       if (!resolved) throw new Error(`Alias did not resolve for module-${suffix}`)
     }
   }
 
-  return { cold: await measure(1, run), cached: await measure(5, run) }
+  return {
+    cold: await measure(5, async () => {
+      const fresh = createTsconfigPathResolverPlugin(tsconfig.json, tsconfig.path).resolveId
+      if (typeof fresh !== 'function') throw new Error('Expected function resolveId hook')
+      await run(fresh)
+    }),
+    cached: await measure(5, async () => run()),
+  }
 }
 
 async function measureRestartBurst(): Promise<{

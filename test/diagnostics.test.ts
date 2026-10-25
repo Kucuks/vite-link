@@ -8,6 +8,42 @@ import { createViteInlineConfig } from '../src/config/vite'
 import { createFixture, resolveNestTestConfig as resolveNestViteConfig } from './helpers'
 
 describe('diagnostics', () => {
+  it.each([
+    'export const load = (name: string) => import(name)',
+    'export const load = (name: string) => import /* split */ (name)',
+    'export const load = (name: string) => import // split\n (name)',
+    'export const load = (name: string) => `${0} ${import(name)}`',
+    String.raw`export const load = (name: string) => imp\u006frt(name)`,
+  ])('preserves dynamic-import diagnostics through the text fast path: %s', async (source) => {
+    const root = await createFixture()
+    await writeFile(join(root, 'src/dynamic.ts'), source)
+    const config = await resolveNestViteConfig({ root })
+    const diagnostics = await runDiagnostics(config)
+    expect(diagnostics.filter((item) => item.code === 'DYNAMIC_IMPORT_NON_LITERAL')).toHaveLength(1)
+  })
+
+  it('keeps source ASTs available to third-party adapters on text-only sources', async () => {
+    const root = await createFixture()
+    await writeFile(join(root, 'src/plain.ts'), 'export const value = 1')
+    const seen: string[] = []
+    const config = await resolveNestViteConfig({
+      root,
+      adapters: [
+        {
+          name: 'consumer',
+          sourceDiagnostics(context) {
+            expect(context.sourceFile.getFullText()).toBe(context.text)
+            expect(context.sourceFile).toBe(context.sourceFile)
+            seen.push(context.file)
+            return []
+          },
+        },
+      ],
+    })
+    await runDiagnostics(config)
+    expect(seen.some((file) => file.endsWith('plain.ts'))).toBe(true)
+  })
+
   it('passes the healthy fixture', async () => {
     const root = await createFixture()
     const config = await resolveNestViteConfig(

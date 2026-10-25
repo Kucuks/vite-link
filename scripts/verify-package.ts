@@ -33,8 +33,9 @@ if (manifest.publishConfig?.access !== 'public') {
 if (manifest.publishConfig?.registry !== 'https://registry.npmjs.org') {
   errors.push('publishConfig.registry must target the public npm registry')
 }
-if (JSON.stringify(manifest.files) !== JSON.stringify(['dist', 'docs', 'LICENSE'])) {
-  errors.push('the npm file allowlist must contain only `dist`, `docs`, and `LICENSE`')
+const publicDocs = ['docs/ADAPTERS.md', 'docs/ARCHITECTURE.md', 'docs/CONFIGURATION.md']
+if (JSON.stringify(manifest.files) !== JSON.stringify(['dist', ...publicDocs, 'LICENSE'])) {
+  errors.push('the npm file allowlist must contain only `dist`, the public guides, and `LICENSE`')
 }
 
 const output = runNpm(['pack', '--dry-run', '--ignore-scripts', '--json'])
@@ -71,7 +72,7 @@ if (packed) {
     if (
       !['package.json', 'README.md', 'LICENSE'].includes(path) &&
       !path.startsWith('dist/') &&
-      !path.startsWith('docs/')
+      !publicDocs.includes(path)
     ) {
       errors.push(`unexpected file in npm package: ${path}`)
     }

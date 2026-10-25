@@ -69,13 +69,22 @@ if (packed) {
   }
 
   for (const path of paths) {
+    const content = readFileSync(path, 'utf8')
+    if (
+      /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|ghp_[A-Za-z0-9]{30,}|npm_[A-Za-z0-9]{30,}|[A-Za-z]:[\\/](?:Users|Projects)[\\/]|\/(?:home|Users)\/[^/\s]+\//.test(
+        content,
+      )
+    ) {
+      errors.push(`packed file contains a local build path or secret-like value: ${path}`)
+    }
     if (path.endsWith('.map')) {
-      const map = JSON.parse(readFileSync(path, 'utf8')) as {
+      const map = JSON.parse(content) as {
         sources?: string[]
         sourceRoot?: string
+        file?: string
       }
       if (
-        [...(map.sources ?? []), map.sourceRoot ?? ''].some((source) =>
+        [...(map.sources ?? []), map.sourceRoot ?? '', map.file ?? ''].some((source) =>
           /^(?:\/|[A-Za-z]:[\\/]|file:)/.test(source),
         )
       ) {

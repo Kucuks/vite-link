@@ -10,6 +10,7 @@ describe('published source maps', () => {
   it('removes builder paths while preserving mappings and embedded source', () => {
     const map = {
       version: 3,
+      file: join(root, 'dist/index.cjs'),
       sources: [
         join(root, 'dist/index.cjs'),
         '../src/index.ts',
@@ -20,6 +21,7 @@ describe('published source maps', () => {
       mappings: 'AAAA',
     }
     const normalized = normalizeSourceMapPaths(map, mapFile, root)
+    expect(normalized.file).toBe('index.cjs')
     expect(normalized.sources).toEqual(['index.cjs', '../src/index.ts', '../src/plugin.ts'])
     expect(normalized.sourcesContent).toEqual(map.sourcesContent)
     expect(normalized.names).toEqual(map.names)
@@ -40,6 +42,16 @@ describe('published source maps', () => {
   it('rejects build inputs outside the project instead of publishing their paths', () => {
     expect(() =>
       normalizeSourceMapPaths({ sources: [resolve(root, '../private/key.ts')] }, mapFile, root),
+    ).toThrow(/outside the build project/)
+  })
+
+  it('rejects an absolute output file outside the build project', () => {
+    expect(() =>
+      normalizeSourceMapPaths(
+        { file: resolve(root, '../private/output.cjs'), sources: [] },
+        mapFile,
+        root,
+      ),
     ).toThrow(/outside the build project/)
   })
 
